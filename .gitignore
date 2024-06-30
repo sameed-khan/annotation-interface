@@ -1,0 +1,21 @@
+# python generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.vscode
+
+# venv
+.venv
+
+#sqlite db file
+*.db
+
+# temp scripts for reloading unloading sql db
+*.sql
+
+# Exclude downloaded files for offline work
+static/assets/sample/
+static/assets/openseadragon/

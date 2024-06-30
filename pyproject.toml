@@ -1,0 +1,35 @@
+[project]
+name = "hfhs-annotation-interface"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "Sameed Khan", email = "sameed.khan@case.edu" }
+]
+dependencies = [
+    "litestar[standard,jinja,sqlalchemy,cryptography]>=2.9.1",
+    "aiosqlite>=0.20.0",
+    "passlib>=1.7.4",
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+classifiers = ["Private :: Do Not Upload"]
+
+[project.scripts]
+"hfhs-annotation-interface" = "hfhs_annotation_interface:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = []
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hfhs_annotation_interface"]
+
+[tool.rye.scripts]
+_litestar = "python -m src.app"

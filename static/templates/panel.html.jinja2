@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../assets/css/bulma-checkbox.css">
+    <script defer src="../scripts/panel.js"></script> -->
+
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/static/assets/css/bulma-checkbox.css">
+    <script defer src="/static/scripts/panel.js"></script>
+
+    <title>Login Page</title>
+</head>
+<body>
+    <header class="mb-3">
+        <div class="columns" style="background-color: #040064">
+            <div class="column is-full">
+                <h1 class="title has-text-white ml-3 mt-1">Annotation Task Management</h1>
+            </div>
+        </div>
+    </header>
+    <section id="task-management-scrollview">
+        <h2 class="subtitle ml-3 mt-5">Your Tasks</h2>
+        <div class="task-display container columns is-centered is-fluid">
+            <div class="column is-three-quarters">
+
+                {% for task in task_list %}
+                    <div class="card task-display-card" data-task_id = "{{ task.uuid }}">
+                        <div class="card-content">
+                            <div class="media">
+                                <div class="media-left">
+                                    <figure class="image is-64x64">
+                                        <img src="/panel/get_task_profile_picture?root_folder={{ task.root_folder }}" alt="Placeholder image">
+                                    </figure>
+                                </div>
+                                <div class="media-content ml-2">
+                                    <div class="fixed-grid has-3-cols">
+                                        <div class="grid">
+                                            <div class="cell">
+                                                <p class="title is-5">{{task.title}}</p>
+                                                <p class="subtitle is-7">Created by: {{task.creator_name}}</p>
+                                            </div>
+                                            <div class="cell">
+                                                <p class="title is-5">Info</p>
+                                                <p class="subtitle is-7">Last Updated: {{ task.last_updated.strftime('%B %d, %Y @ %I:%M %p') }}</p>
+                                                <p class="is-size-7">
+                                                    <span>Root Folder:</span>
+                                                    <span class="is-family-monospace">{{task.root_folder}}</span>
+                                                </p>
+                                            </div>
+                                            <div class="cell">
+                                                <p class="title is-5">Status</p>
+                                                <p class="subtitle is-7">{{task.labeled_count}} / {{task.total_count}} annotated</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="media-right">
+                                    <button id="task-edit-button-{{task_id}}" class="button is-link js-modal-trigger edit-keybind-button pr-2 pl-3" data-target="task-edit-modal" data-task_id="{{ task.uuid }}">
+                                        <span class="icon-text">
+                                            <span class="icon is-small m-0">
+                                                <i class="fas fa-pencil"></i>
+                                            </span>
+                                            <span class="edit-keybind-text">Edit Settings&nbsp</span> <!-- &nbsp to even out spacing on either side of the button-->
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+            </div>
+        </div>
+    </section>
+    <button type="button" class="is-fab js-modal-trigger button is-primary is-large" data-target="task-creation-modal">
+        <span class="icon">
+            <i class="fas fa-plus"></i>
+        </span>
+        <span>New Task</span>
+    </button>
+
+    <!-- Task Creation Modal -->
+    <dialog id="task-creation-modal" class="nonbulma-modal">
+        <form action="panel/new_task" method="post">
+            <div class="columns">
+                <div class="column is-half">
+                    <div class="field">
+                        <label class="label">Root Folder Path</label>
+                        <div class="control has-icons-left">
+                            <input class="input" type="text" placeholder="Enter path here" name="root_folder" required>
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-folder"></i>
+                            </span>
+                            <p class="help is-danger is-hidden">The path does not exist</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="column is-half">
+                    <label class="label">Edit Labels and Keybinds</label> 
+                    <div class="field is-flex is-flex-wrap-nowrap mb-1">
+                        <div class="control is-flex-grow-1">
+                            <input class="input" type="text" placeholder="Enter label" required>
+                        </div>
+                        <div class="control is-flex-grow-0">
+                            <div class="select">
+                                <select>
+                                    <option>A</option>
+                                    <option>S</option>
+                                    <option>D</option>
+                                    <option>F</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="field is-flex is-flex-wrap-nowrap mb-1">
+                        <div class="control is-flex-grow-1">
+                            <input class="input" type="text" placeholder="Enter label" required>
+                        </div>
+                        <div class="control is-flex-grow-0">
+                            <div class="select">
+                                <select>
+                                    <option>A</option>
+                                    <option>S</option>
+                                    <option>D</option>
+                                    <option>F</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="control">
+                        <button id="add-label-button" class="button is-light is-small" type="button">
+                            <span class="icon">
+                                <i class="fas fa-plus"></i>
+                            </span>
+                            <span>Add Label</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="field is-grouped">
+                <div class="control">
+                    <button class="button is-link" type="submit">Create Task</button>
+                </div>
+                <div class="control">
+                    <button class="button is-link is-ghost cancel-close" type="reset">Cancel</button>
+                </div>
+            </div>
+        </form>
+    </dialog>
+    <dialog id="task-edit-modal" class="nonbulma-modal">
+        <form id="task-edit-form"> <!-- will be submitted via fetch request -->
+            {# <div class="columns">
+                <div class="column is-half">
+                    <label class="label">Edit Labels and Keybinds</label> 
+
+                    { % for label_keybind in task_label_keybinds % }
+                        <div class="field is-flex is-flex-wrap-nowrap mb-1">
+                            <div class="control is-flex-grow-1">
+                                <input class="input" type="text" value="{{ label_keybind.label }}" required>
+                            </div>
+                            <div class="control is-flex-grow-0">
+                                <div class="select">
+                                    <select>
+                                        <option {% if label_keybind.keybind == 'A' %}selected{% endif %}>A</option>
+                                        <option {% if label_keybind.keybind == 'S' %}selected{% endif %}>S</option>
+                                        <option {% if label_keybind.keybind == 'D' %}selected{% endif %}>D</option>
+                                        <option {% if label_keybind.keybind == 'F' %}selected{% endif %}>F</option>
+                                        <option {% if label_keybind.keybind == 'J' %}selected{% endif %}>J</option>
+                                        <option {% if label_keybind.keybind == 'K' %}selected{% endif %}>K</option>
+                                        <option {% if label_keybind.keybind == 'L' %}selected{% endif %}>L</option>
+                                        <option {% if label_keybind.keybind == ';' %}selected{% endif %}>;</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    { % endfor % }
+                    
+                </div>
+                <div class="column is-half">
+                    <label class="label">Select Images to Include</label>
+                    <div class="field">
+                        <div class="control task-file-select-control">
+                            <label class="b-checkbox checkbox task-file-select">
+                                <input type="checkbox" checked>
+                                <span class="check is-info"></span>
+                                <span class="control-label">{{filename}}</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div> #}
+            <div class="field is-grouped">
+                <div class="control">
+                    <button class="button is-link" type="submit">Submit Changes</button>
+                </div>
+                <div class="control">
+                    <button class="button is-link is-ghost cancel-close" type="reset">Cancel</button>
+                </div>
+            </div>
+        </form>
+    </dialog>
+</body>
+</html>

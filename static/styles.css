@@ -1,0 +1,133 @@
+@import "https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css";
+@import "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css";
+
+html, body {
+    height: 100%;
+}
+
+/* LOGIN */
+.empty-space-header {
+    height: 7rem;
+}
+
+figure {
+   height: auto; 
+   width: 100%;
+}
+img {
+    height: auto;
+    width: auto;
+}
+
+/* PANEL */
+.task-display-card {
+    transition: filter 0.3s ease;
+}
+
+.task-display-card .media-content {
+    cursor: pointer;
+}
+
+.edit-keybind-text {
+    max-width:0;
+    overflow: hidden;
+    transition: max-width 0.5s ease-in-out;
+}
+
+.edit-keybind-button:hover .edit-keybind-text {
+    max-width: 9em;
+    visibility: visible;
+}
+
+.task-display {
+    max-height: 80vh;
+    overflow-y: scroll;
+}
+
+.is-fab {
+    position: fixed;
+    right: 3rem;
+    bottom: 2rem;
+}
+
+.nonbulma-modal {
+    width: 50%;
+    max-width: 70vw;
+    max-height: 50vh;
+    border-radius: 0.5rem;
+    background-color: hsl(221, 14%, 98%);
+}
+
+#task-edit-modal {
+    height: 50vh;
+    overflow: hidden; /* To enable task-file-select-control and other subelements to scroll instead of the modal itself */
+}
+::backdrop {
+    background-color: hsla(221, 14%, 4%, 0.86);
+}
+
+.task-file-select-control {
+    max-height: 35vh; /* TODO: fix this to be a relative percentage of the parent container */
+    overflow: scroll;
+}
+
+/* LABEL */
+.label-page-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.label-page-main {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+#osd-viewer {
+    flex: 0 0 60vh;
+}
+
+.columns {
+    flex: 0 0 auto;
+}
+
+.notification-area {
+    flex: 1 0 auto;
+    min-height: 1rem;
+}
+
+.keybind-label {
+    position: absolute;
+    top: 5px;
+    left: 15px;
+    font-weight: bold;
+    color: #ba209e
+}
+
+.label-btn {
+    height: 100%;
+    word-wrap: break-word;
+    white-space: normal;
+    hyphens: auto;
+    position: relative;
+    transition: 0.2s filter ease;
+    cursor: pointer;
+}
+
+.label-btn:hover {
+    filter: brightness(90%);
+}
+
+.label-button-pressed {
+    filter: brightness(90%);
+}
+
+.info-and-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-shrink: 0;
+    padding: 1rem 0.5rem;
+    background-color: #f5f5f5;
+}
