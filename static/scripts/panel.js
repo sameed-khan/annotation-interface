@@ -1,10 +1,18 @@
+import { routes } from './routes.js';
+import { 
+    FormValidationManager, FormValidationControl, onlyAlphaNumeric, 
+    onlyAlphanumericSpacesHyphens, onlySingleCharacter, allItemsUnique, bulmaRemoveDanger,
+    bulmaSetDanger, partial
+ } from './validation.js';
+
+
 function populateModal(target, taskData) {
     target.querySelector('form').innerHTML = `
         <div class="columns">
-            <div class="column is-half">
+            <fieldset name="label-keybind-input-form-group" class="column is-half">
                 <label class="label">Edit Labels and Keybinds</label> 
                 ${taskData.label_keybinds.map(lk => `
-                    <div class="field is-flex is-flex-wrap-nowrap mb-1">
+                    <div class="field label-keybind-input-field is-flex is-flex-wrap-nowrap mb-1">
                         <div class="control is-flex-grow-1">
                             <input class="input" type="text" value="${lk.label}" required>
                         </div>
@@ -19,8 +27,8 @@ function populateModal(target, taskData) {
                         </div>
                     </div>
                 `).join('')}
-            </div>
-            <div class="column is-half">
+            </fieldset>
+            <fieldset name="file-select-input-form-group" class="column is-half">
                 <label class="label">Select Images to Include</label>
                 ${taskData.files.map(file => `
                     <div class="field">
@@ -33,7 +41,7 @@ function populateModal(target, taskData) {
                         </div>
                     </div>
                 `).join('')}
-            </div>
+            </fieldset>
         </div>
         <div class="field is-grouped">
             <div class="control">
@@ -79,54 +87,157 @@ document.addEventListener('DOMContentLoaded', () => {
 
         close.addEventListener('click', () => {
             target.close();
+            target.querySelectorAll('.dynamic-inserted-element').forEach(element => { element.remove() })
         });
     });
 });
 
+// Handle add-label button in the new-task modal
+var lkSelectControls = 2; // the html template always starts with 2 label-keybind select fields
 // Enable add-label button in the new-task modal to add additional labels
 document.getElementById('add-label-button').addEventListener('click', function() {
     // Create a new div
-    var newDiv = document.createElement('div');
-
-    // Set the innerHTML of the new div
-    newDiv.innerHTML = `
-        <div class="field is-flex is-flex-wrap-nowrap mb-1">
-            <div class="control is-flex-grow-1">
-                <input class="input" type="text" placeholder="Enter label">
+    let newDiv = document.createElement('div');
+    let newElementHTML = `
+        <div class="field is-grouped label-keybind-input-field dynamic-inserted-element mb-1">
+            <div class="control is-expanded">
+                <input name="label-input-${lkSelectControls}" class="input label-input" type="text" placeholder="Enter label" required>
             </div>
-            <div class="control is-flex-grow-0">
-                <div class="select">
-                    <select>
-                        <option>A</option>
-                        <option>S</option>
-                        <option>D</option>
-                        <option>F</option>
-                    </select>
-                </div>
+            <div class="control keybind-control has-text-centered">
+                <input name="keybind-input-${lkSelectControls}" class="input keybind-input" autocomplete="off" readonly onfocus="this.removeAttribute('readonly');">
             </div>
         </div>
     `;
 
-    // Get the add-label-button element
-    var button = document.getElementById('add-label-button');
+    // Get the last instance of the above type of element and insert as next sibling
+    let endBoundaryElement = document.querySelector('.dynamic-insert-end-boundary');
+    let parentFieldset = document.getElementById('task-creation-lk-fieldset');
+    parentFieldset.insertBefore(newDiv, endBoundaryElement)
 
-    // Insert the new div before the button
-    button.parentNode.insertBefore(newDiv, button);
+    // Now that the element is inserted, we can safely change the outerHTML
+    newDiv.outerHTML = newElementHTML;
+
+    // Increment the lkSelectControls counter
+    lkSelectControls++;
 });
 
 // Darken the background when mouse is hovering over center part of a task display card
-document.querySelectorAll('.task-display-card .media-content').forEach(content => {
-    cardParent = content.closest('.task-display-card');
-    content.addEventListener('mouseenter', () => {
-        cardParent.style.filter = 'brightness(90%)';
+// document.querySelectorAll('.task-display-card .media-content').forEach(content => {
+//     cardParent = content.closest('.task-display-card');
+//     content.addEventListener('mouseenter', () => {
+//         cardParent.style.filter = 'brightness(90%)';
+//     });
+//     content.addEventListener('mouseleave', () => {
+//         cardParent.style.filter = '';
+//     });
+//     content.addEventListener('click', () => {
+//         let url = new URL(window.location.origin);
+//         url.pathname = '/label';
+//         url.searchParams.append('task_id', cardParent.dataset.task_id);
+//         window.location.href = url.href;
+//     });
+// });
+
+// Handle form validatino for root folder input field
+document.getElementById('root-folder-input').addEventListener('input', () => {
+    let rootFolderInput = document.getElementById('root-folder-input');
+    let submitButton = document.getElementById('task-creation-submit-button');
+    let invalidRootFolderHelpText = document.getElementById('root-folder-help-text-danger');
+    let validRootFolderHelpText = document.getElementById('root-folder-help-text-info');
+
+    fetch(`${routes.checkPath}?path=${encodeURIComponent(rootFolderInput.value)}`)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(response.statusText);
+        }
+        return response.json();
+    })
+    .then(data => {
+        validRootFolderHelpText.textContent = `Found ${data.file_count} files to annotate`
+        validRootFolderHelpText.classList.remove('is-hidden');
+        invalidRootFolderHelpText.classList.add('is-hidden');
+        submitButton.disabled = false;
+    })
+    .catch(() => {
+        invalidRootFolderHelpText.textContent = 'Path does not exist or is not a directory.';
+        invalidRootFolderHelpText.classList.remove('is-hidden');
+        validRootFolderHelpText.classList.add('is-hidden');
+        submitButton.disabled = true;
+    })
+})
+
+// Handle form validation for new-task modal label inputs
+document.getElementById('task-creation-form').querySelectorAll('input.label-input').forEach(inputElement => {
+    inputElement.addEventListener('input', () => {
+        let submitButton = document.getElementById('task-creation-submit-button');
+        let labelAlphaNumericSpaceHyphenValidation = new FormValidationControl(
+            inputElement,
+            onlyAlphanumericSpacesHyphens,
+            'Only alphanumeric characters, spaces, and hyphens allowed.',
+        ); 
+
+        let otherLabels = [
+            ...inputElement.closest('fieldset').querySelectorAll('input.label-input')
+        ].map(input => input.value);
+
+        let labelsUniqueValidation = new FormValidationControl(
+            inputElement,
+            partial(allItemsUnique, otherLabels),
+            'Labels are case and space insensitive and must be unique.',
+        );
+
+        let labelValidationManager = new FormValidationManager(
+            bulmaRemoveDanger,
+            bulmaSetDanger,
+            inputElement.closest('fieldset').querySelector('p.help'),
+            submitButton,
+            labelAlphaNumericSpaceHyphenValidation,
+            labelsUniqueValidation,
+        );
+
+        labelValidationManager.apply_validation();
+            
     });
-    content.addEventListener('mouseleave', () => {
-        cardParent.style.filter = '';
+})
+
+// Capture KEYPRESS event for keybind inputs and insert that key into the input field
+document.getElementById('task-creation-form').querySelectorAll('input.keybind-input').forEach(inputElement => {
+    inputElement.addEventListener('keydown', (event) => {
+        event.preventDefault();
+        inputElement.value = event.key;
+        let helpTextElement = inputElement.closest('fieldset').querySelector('p.help');
+        let submitButton = document.getElementById('task-creation-submit-button');
+
+        let otherKeybinds = [
+            ...inputElement.closest('fieldset').querySelectorAll('input.keybind-input')
+        ].map(input => input.value);
+
+        let keybindsUniqueValidation = new FormValidationControl(
+            inputElement,
+            partial(allItemsUnique, otherKeybinds),
+            'Keybinds are case-insensitive and must be unique.',
+        )
+
+        let labelValidationManager = new FormValidationManager(
+            bulmaRemoveDanger,
+            bulmaSetDanger,
+            helpTextElement,
+            submitButton,
+            keybindsUniqueValidation,
+        );
+
+        labelValidationManager.apply_validation();
+
+        if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
+            console.log('modifier key detected');
+            inputElement.classList.add('is-danger');
+            helpTextElement.textContent = 'Keybind must not include modifier keys (Shift, Ctrl, Alt, or Meta).';
+        } 
     });
-    content.addEventListener('click', () => {
-        let url = new URL(window.location.origin);
-        url.pathname = '/label';
-        url.searchParams.append('task_id', cardParent.dataset.task_id);
-        window.location.href = url.href;
-    });
+})
+
+document.getElementById('task-creation-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    let formData = new FormData(event.target);
+    console.log(formData);
 });

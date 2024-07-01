@@ -1,3 +1,6 @@
+import { routes } from './routes.js';
+
+
 class ImageNavigator {
     constructor(viewerId, taskId) {
         this.viewer = OpenSeadragon({

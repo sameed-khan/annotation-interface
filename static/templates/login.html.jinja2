@@ -9,7 +9,7 @@
 
     <link rel="stylesheet" href="static/styles.css">
     <link rel="icon" type="image/jpg" href="static/assets/favicon.jpeg">
-    <script defer src="static/scripts/login.js"></script>
+    <script type="module" defer src="static/scripts/login.js"></script>
     <title>Login Page</title>
 
 </head>
@@ -27,16 +27,16 @@
 
     <div class="columns is-centered mt-5">
         <div class="column is-4">
-            <form method="post" action="login">
+            <form id="login-form" method="post" action="{{ login_user_route }}">
                 <div class="field">
                     <div class="control has-icons-left">
-                        <input name="username" class="input" type="text" placeholder="Username" required>
+                        <input name="request_username" class="input" type="text" placeholder="Username" required>
                         <span class="icon is-small is-left">
                         <i class="fas fa-user"></i>
                         </span>
                     </div>
                     <div class="control has-icons-left">
-                        <input name="password" class="input" type="text" placeholder="Password" required>
+                        <input name="request_password" class="input" type="text" placeholder="Password" required>
                         <span class="icon is-small is-left">
                         <i class="fas fa-lock"></i>
                         </span>
@@ -62,11 +62,11 @@
 
         <div class="modal-content">
             <div class="box">
-                <form action="login/new_user" method="post">
+                <form action="{{ register_user_route }}" method="post">
                     <div class="field">
                     <label class="label">Username</label>
                     <div class="control has-icons-left has-icons-right">
-                        <input id="username-input" name="username" class="input" type="text" placeholder="Username" required>
+                        <input id="username-input" name="request_username" class="input" type="text" placeholder="Username" required>
                         <span class="icon is-small is-left">
                         <i class="fas fa-user"></i>
                         </span>
@@ -78,7 +78,7 @@
                     <div class="field">
                     <label class="label">Password</label>
                     <div class="control has-icons-left has-icons-right">
-                        <input id="password-input" name="password" class="input" type="text" placeholder="Password" required>
+                        <input id="password-input" name="request_password" class="input" type="text" placeholder="Password" required>
                         <span class="icon is-small is-left">
                         <i class="fas fa-lock"></i>
                         </span>

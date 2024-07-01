@@ -1,3 +1,6 @@
+import { routes } from './routes.js';
+
+
 document.addEventListener('DOMContentLoaded', () => {
     // If there was an incorrect login
     const loginFailed = localStorage.getItem('loginFailed');
@@ -60,17 +63,17 @@ const newUserSubmitButton = document.getElementById('new-user-submit-button')
 usernameInput.addEventListener('input', function() {
     if (usernameInput.value.length > 0) {
         availableHelpText.classList.remove('is-hidden');
-        fetch(`/login/check_user?username_to_check=${encodeURIComponent(usernameInput.value)}`)
+        fetch(`${routes.checkUsername}?request_username=${encodeURIComponent(usernameInput.value)}`)
         .then(response => response.json())
         .then(data => {
-            if (data.username_in_use) {
-                availableHelpText.classList.add('is-hidden');
-                unavailableHelpText.classList.remove('is-hidden');
-                newUserSubmitButton.disabled = true;
-            } else {
+            if (data.available) {
                 availableHelpText.classList.remove('is-hidden');
                 unavailableHelpText.classList.add('is-hidden');
                 newUserSubmitButton.disabled = false;
+            } else {
+                availableHelpText.classList.add('is-hidden');
+                unavailableHelpText.classList.remove('is-hidden');
+                newUserSubmitButton.disabled = true;
             }
         });
     } else {
@@ -87,4 +90,46 @@ verifyPasswordInput.addEventListener('input', function() {
         nomatchHelpText.classList.add('is-hidden');
         newUserSubmitButton.disabled = false;
     }
+});
+
+var form = document.getElementById('login-form');
+form.addEventListener('submit', function(event) {
+    event.preventDefault();
+    fetch(routes.loginUser, {
+        method: 'POST',
+        body: JSON.stringify(Object.fromEntries(new FormData(form))),
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            switch (response.status) {
+                case 401:
+                case 403:
+                    document.getElementById('login-failed-notification').classList.remove('is-hidden');
+                    setTimeout(() => {
+                        document.getElementById('login-failed-notification').classList.add('is-hidden');
+                    }, 5000);
+                    break;
+                case 404:
+                    alert("This server has not been set up to handle logins.");
+                    break;
+                case 500:
+                    alert("Internal server error. Please contact the developer.");
+                    console.log(response);
+                default:
+                    alert("Unhandled error. Please contact the developer.");
+                    console.log(response);
+            }
+            throw new Error('Error:', response); 
+        }
+        return response.json();
+    })
+    .then(data => {
+        window.location.href = data.url;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    })
 });
