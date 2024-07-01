@@ -15,6 +15,7 @@ aiosqlite==0.20.0
     # via hfhs-annotation-interface
 alembic==1.13.2
     # via advanced-alchemy
+    # via hfhs-annotation-interface
 anyio==4.4.0
     # via httpx
     # via litestar
@@ -84,6 +85,8 @@ python-dateutil==2.9.0.post0
     # via faker
 python-dotenv==1.0.1
     # via uvicorn
+pytz==2024.1
+    # via hfhs-annotation-interface
 pyyaml==6.0.1
     # via litestar
     # via uvicorn
