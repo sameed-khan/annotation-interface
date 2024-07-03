@@ -1,3 +1,11 @@
+# API URLs
+# NOTE: ALL URLs defined in this file must be synced with the frontend URLs defined in src/static/scripts/routes.js
+
+# Python    | JS
+# All Caps  | camelCase
+# X_Y_Z     | either getXYZ or xYZ
+
+
 # MISC
 STATIC_FILE_ENDPOINT = "/static"
 SCHEMA_ENDPOINT = "/schema"
@@ -7,7 +15,7 @@ CHECK_PATH = "/api/system/check_path"
 
 # PAGE URLS
 LOGIN_PAGE = "/login"
-MANAGE_TASK_PAGE = "/panel"
+TASK_PANEL_PAGE = "/panel"
 ANNOTATE_PAGE = "/label"
 
 # USER

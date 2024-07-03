@@ -1,19 +1,17 @@
 from typing import Optional
+from uuid import UUID
 
-from uuid import UUID, uuid4
-from datetime import date
+from advanced_alchemy.base import BigIntAuditBase, UUIDAuditBase
+from sqlalchemy import CHAR, Boolean, Column, Float, ForeignKey, String, Table
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-import sqlalchemy as sa
-from sqlalchemy import select, and_, String, Integer, Float, Text, DateTime, Boolean, ForeignKey, Table, Column, update, CHAR
-from sqlalchemy.sql import func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-
-from advanced_alchemy.base import UUIDAuditBase, BigIntAuditBase
-
-user_tasks = Table("user_tasks", UUIDAuditBase.metadata,
+user_tasks = Table(
+    "user_tasks",
+    UUIDAuditBase.metadata,
     Column("user_id", ForeignKey("users.id"), primary_key=True),
-    Column("task_id", ForeignKey("tasks.id"), primary_key=True)
+    Column("task_id", ForeignKey("tasks.id"), primary_key=True),
 )
+
 
 class User(UUIDAuditBase):
     __tablename__ = "users"
@@ -23,8 +21,13 @@ class User(UUIDAuditBase):
     annotation_rate: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
 
     created_tasks = relationship("Task", back_populates="creator", lazy="selectin")
-    assigned_tasks = relationship("Task", secondary=user_tasks, back_populates="contributors", lazy="selectin")
-    label_keybinds = relationship("LabelKeybind", back_populates="user", lazy="selectin", cascade="all, delete")
+    assigned_tasks = relationship(
+        "Task", secondary=user_tasks, back_populates="contributors", lazy="selectin"
+    )
+    label_keybinds = relationship(
+        "LabelKeybind", back_populates="user", lazy="selectin", cascade="all, delete"
+    )
+
 
 class Task(UUIDAuditBase):
     __tablename__ = "tasks"
@@ -32,11 +35,22 @@ class Task(UUIDAuditBase):
     title: Mapped[str] = mapped_column(String, nullable=False)
     root_folder: Mapped[str] = mapped_column(String, nullable=False)
     creator_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
-    
+
     creator = relationship("User", back_populates="created_tasks", lazy="selectin")
-    contributors = relationship("User", secondary=user_tasks, back_populates="assigned_tasks", lazy="selectin", cascade="all, delete")
-    annotations = relationship("Annotation", back_populates="associated_task", lazy="selectin", cascade="all, delete")
-    label_keybinds = relationship("LabelKeybind", back_populates="task", lazy="selectin", cascade="all, delete")
+    contributors = relationship(
+        "User",
+        secondary=user_tasks,
+        back_populates="assigned_tasks",
+        lazy="selectin",
+        cascade="all, delete",
+    )
+    annotations = relationship(
+        "Annotation", back_populates="associated_task", lazy="selectin", cascade="all, delete"
+    )
+    label_keybinds = relationship(
+        "LabelKeybind", back_populates="task", lazy="selectin", cascade="all, delete"
+    )
+
 
 class Annotation(BigIntAuditBase):
     __tablename__ = "annotations"
@@ -49,6 +63,7 @@ class Annotation(BigIntAuditBase):
 
     associated_task = relationship("Task", back_populates="annotations", lazy="selectin")
 
+
 class LabelKeybind(UUIDAuditBase):
     __tablename__ = "label_keybinds"
     __table_args__ = {"extend_existing": True}
@@ -57,5 +72,9 @@ class LabelKeybind(UUIDAuditBase):
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
     task_id: Mapped[UUID] = mapped_column(ForeignKey("tasks.id"))
 
-    user = relationship("User", back_populates="label_keybinds", lazy="selectin", cascade="all, delete")
-    task = relationship("Task", back_populates="label_keybinds", lazy="selectin", cascade="all, delete")
+    user = relationship(
+        "User", back_populates="label_keybinds", lazy="selectin", cascade="all, delete"
+    )
+    task = relationship(
+        "Task", back_populates="label_keybinds", lazy="selectin", cascade="all, delete"
+    )

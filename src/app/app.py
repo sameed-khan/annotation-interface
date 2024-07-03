@@ -1,42 +1,29 @@
-from .domain.controllers import *
-from .domain.urls import *
-from .domain.schema import User
-
-import sys
-import os
 from os import urandom
-from pathlib import Path
-from dataclasses import dataclass
-from typing import Annotated, Dict, Any, Optional, Sequence, Tuple
-from datetime import date, datetime
-from collections.abc import AsyncGenerator
-from uuid import UUID, uuid4
+from typing import Any, Dict
 
-from litestar import Litestar, Router, Request, patch
-from litestar.status_codes import HTTP_302_FOUND, HTTP_409_CONFLICT, HTTP_401_UNAUTHORIZED, HTTP_200_OK, HTTP_404_NOT_FOUND, HTTP_202_ACCEPTED
-from litestar import get, post 
-from litestar.response import Redirect, Template, Response, File
-from litestar.contrib.jinja import JinjaTemplateEngine
-from litestar.template.config import TemplateConfig
-from litestar.static_files import create_static_files_router
-from litestar.enums import RequestEncodingType
-from litestar.params import Body
-from litestar.contrib.sqlalchemy.plugins import SQLAlchemyPlugin, SQLAlchemyAsyncConfig
-from litestar.exceptions import ClientException, NotAuthorizedException, NotFoundException
-from litestar.connection import ASGIConnection
-from litestar.middleware.session.client_side import CookieBackendConfig, ClientSideSessionBackend
-from litestar.security.session_auth import SessionAuth
+from advanced_alchemy.base import orm_registry
 
-from sqlalchemy import select, and_, String, Integer, Float, Text, DateTime, Boolean, ForeignKey, Table, Column, update
-from sqlalchemy.sql import func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.exc import IntegrityError, NoResultFound
-
-from advanced_alchemy.extensions.litestar.plugins.init.config.asyncio import autocommit_before_send_handler
+# from advanced_alchemy.config import EngineConfig
 from advanced_alchemy.config.asyncio import AsyncSessionConfig
-from advanced_alchemy.base import UUIDBase, UUIDAuditBase, orm_registry
+from advanced_alchemy.extensions.litestar.plugins.init.config.asyncio import (
+    autocommit_before_send_handler,
+)
+from jinja2 import Environment, FileSystemLoader
+from litestar import Litestar
+from litestar.connection import ASGIConnection
+from litestar.contrib.jinja import JinjaTemplateEngine
+from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyPlugin
+from litestar.middleware.session.client_side import ClientSideSessionBackend, CookieBackendConfig
+from litestar.security.session_auth import SessionAuth
+from litestar.static_files import create_static_files_router
+from litestar.template.config import TemplateConfig
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
+from app.domain import urls
+from app.domain.controllers import PageController, SystemController, TaskController, UserController
+from app.domain.schema import User
+from app.domain.template_filters import format_and_localize_timestamp, reduce_slashes
 
 # class Base(DeclarativeBase):
 #     pass
@@ -54,7 +41,7 @@ from advanced_alchemy.base import UUIDBase, UUIDAuditBase, orm_registry
 #     password: Mapped[str] = mapped_column(String, nullable=False)
 #     date_created: Mapped[date] = mapped_column(DateTime, default=func.now(), nullable=False)
 #     annotation_rate: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
-    
+
 #     created_tasks = relationship("Task", back_populates="creator", lazy="selectin")
 #     contributed_tasks = relationship("Task", secondary=user_tasks, back_populates="contributors", lazy="selectin")
 #     label_keybinds = relationship("LabelKeybind", back_populates="user", lazy="selectin", cascade="all, delete")
@@ -67,7 +54,7 @@ from advanced_alchemy.base import UUIDBase, UUIDAuditBase, orm_registry
 #     root_folder: Mapped[str] = mapped_column(String, nullable=False)
 #     creator_id: Mapped[UUID] = mapped_column(Text, ForeignKey("users.uuid"))
 #     last_updated: Mapped[date] = mapped_column(DateTime, default=func.now(), nullable=False)
-    
+
 #     creator = relationship("User", back_populates="created_tasks", lazy="selectin")
 #     contributors = relationship("User", secondary=user_tasks, back_populates="contributed_tasks", lazy="selectin", cascade="all, delete")
 #     annotations = relationship("Annotation", back_populates="associated_task", lazy="selectin", cascade="all, delete")
@@ -253,7 +240,7 @@ from advanced_alchemy.base import UUIDBase, UUIDAuditBase, orm_registry
 #             }
 #             user_as_dict_tasks.append(task_dict)
 
-#         # task_binds = list[LabelKeybind] = await 
+#         # task_binds = list[LabelKeybind] = await
 #         return Template(template_name="panel.html.jinja2", context={"task_list": user_as_dict_tasks})
 
 #     except ValueError:
@@ -307,7 +294,7 @@ from advanced_alchemy.base import UUIDBase, UUIDAuditBase, orm_registry
 #     user_id: str | None = request.session.get("user_id")
 #     if user_id is None:
 #         raise NotAuthorizedException("User not found in session")
-    
+
 #     lks = await get_binds_for_user_and_task(user_id, task_id, transaction)
 #     label_keybinds = [{ "label": lk.label, "keybind": lk.keybind } for lk in lks]
 
@@ -317,7 +304,7 @@ from advanced_alchemy.base import UUIDBase, UUIDAuditBase, orm_registry
 #         "total": total_count,
 #         "progress_percent": progress_percent,
 #         "label_keybinds": label_keybinds
-#     })    
+#     })
 
 # @get(path="/label/get_next_annotation")
 # async def label_get_next_image(task_uuid: str, transaction: AsyncSession) -> Response:
@@ -406,10 +393,14 @@ db_config = SQLAlchemyAsyncConfig(
     metadata=orm_registry.metadata,
     create_all=True,
     before_send_handler=autocommit_before_send_handler,
-    session_config = AsyncSessionConfig(expire_on_commit=True)
+    session_config=AsyncSessionConfig(expire_on_commit=True),
+    # engine_config=EngineConfig(echo=True),  # type: ignore
 )
 
-async def retrieve_user_handler( session: Dict[str, Any], connection: ASGIConnection[Any, Any, Any, Any]) -> User | None:
+
+async def retrieve_user_handler(
+    session: Dict[str, Any], connection: ASGIConnection[Any, Any, Any, Any]
+) -> User | None:
     user_id = session.get("user_id")
     if not user_id:
         return None
@@ -418,22 +409,31 @@ async def retrieve_user_handler( session: Dict[str, Any], connection: ASGIConnec
     if engine is None:
         engine = create_async_engine("sqlite+aiosqlite:///dev.db")
         connection.app.state.engine = engine
-    
+
     async with AsyncSession(engine) as db_session:
         query = select(User).where(User.id == user_id)
         result = await db_session.execute(query)
         return result.scalars().one_or_none()
+
 
 session_auth = SessionAuth[User, ClientSideSessionBackend](
     retrieve_user_handler=retrieve_user_handler,  # type: ignore
     session_backend_config=CookieBackendConfig(secret=urandom(16)),
     exclude=[
         urls.LOGIN_PAGE,
-        urls.LOGIN_USER, 
+        urls.LOGIN_USER,
         urls.CHECK_USERNAME,
-        urls.STATIC_FILE_ENDPOINT, 
+        urls.STATIC_FILE_ENDPOINT,
         urls.SCHEMA_ENDPOINT,
-    ]
+    ],
+)
+
+jinja_env = Environment(loader=FileSystemLoader("static/templates"))  # NOTE: cannot prefix "/"
+jinja_env.filters.update(
+    {
+        "reduce_slashes": reduce_slashes,
+        "filter_timestamp": format_and_localize_timestamp,
+    }
 )
 
 # async def on_startup() -> None:
@@ -442,21 +442,23 @@ session_auth = SessionAuth[User, ClientSideSessionBackend](
 #         await conn.run_sync(Base.metadata.create_all)
 
 app = Litestar(
-    # route_handlers=[PageController, UserController, panel_page, check_username, create_new_user, 
-    #                 get_task_profile_picture, get_task_keybinds, label_update_annotation, label_undo_annotation,
-    #                 label_page, label_get_next_image, label_get_image,
+    # route_handlers=[PageController, UserController, panel_page, check_username, create_new_user,
+    #                 get_task_profile_picture, get_task_keybinds, label_update_annotation,
+    #                 label_undo_annotation, label_page, label_get_next_image, label_get_image,
     #                 create_static_files_router(path="static", directories=["static"])],
-    route_handlers = [
-        PageController, UserController, SystemController,
-        create_static_files_router(path=urls.STATIC_FILE_ENDPOINT, directories=["static"])  # TODO: change static to be some constant defined somehwere else in a config
+    route_handlers=[
+        PageController,
+        UserController,
+        SystemController,
+        TaskController,
+        create_static_files_router(
+            path=urls.STATIC_FILE_ENDPOINT, directories=["static"]
+        ),  # TODO: change static to be some constant defined somehwere else in a config
     ],
-    template_config=TemplateConfig(
-        directory=Path("static/templates"),  # TODO: change this to be config-able
-        engine=JinjaTemplateEngine,
-    ),
+    template_config=TemplateConfig(instance=JinjaTemplateEngine.from_environment(jinja_env)),
     # on_startup=[on_startup],
     # dependencies={"transaction": provide_transaction},
     plugins=[SQLAlchemyPlugin(db_config)],
     on_app_init=[session_auth.on_app_init],
-    middleware=[session_auth.middleware]
+    middleware=[session_auth.middleware],
 )
