@@ -2,7 +2,7 @@ import { routes } from './routes.js';
 import { 
     FormValidationManager, FormValidationControl, onlyAlphaNumeric, 
     onlyAlphanumericSpacesHyphens, onlySingleCharacter, allItemsUnique, bulmaRemoveDanger,
-    bulmaSetDanger, partial
+    bulmaSetDanger, partial, escapeBackslashes, notUndoKey
  } from './validation.js';
 
 
@@ -52,6 +52,46 @@ function populateModal(target, taskData) {
             </div>
         </div>
         `;
+}
+
+function generateRequestFromTaskCreationForm(formData) {
+    /**
+     * [                                        {
+     *  [root-folder-path, 'path/to/root'],         root: 'path/to/root', 
+     *                                       =>     lks: [
+     *  [label1, keybind1],                                 {label: 'label1', keybind: 'keybind1'}, 
+     *  [label2, keybind2],                                 {label: 'label2', keybind: 'keybind2'}, 
+     *  ...]                                            ...]
+     *                                          } 
+     */
+
+    let taskData = {
+        root: null,
+        lks: [],
+    }
+
+    formData.forEach((key, value) => {
+        if (key.startsWith('label-input-')) {
+            let lkIndex = key.split('-')[2];
+            let lk = taskData.lks[lkIndex] || {};
+            lk.label = value;
+            taskData.lks[lkIndex] = lk;
+        } else if (key.startsWith('keybind-input-')) {
+            let lkIndex = key.split('-')[2];
+            let lk = taskData.lks[lkIndex] || {};
+            lk.keybind = value;
+            taskData.lks[lkIndex] = lk;
+        } else if (key === 'root-folder-input') {
+            let backSlashEscaped = escapeBackslashes(value);
+            taskData.root = encodeURIComponent(backSlashEscaped);
+        } else if (key === 'task-title-input') {
+            taskData.title = value;
+        } else {
+            throw new Error('Invalid form data key found: ' + key);
+        }
+    });
+
+    return taskData;
 }
 document.addEventListener('DOMContentLoaded', () => {
     // Enable opening modals for all buttons
@@ -158,8 +198,8 @@ document.getElementById('root-folder-input').addEventListener('input', () => {
         invalidRootFolderHelpText.classList.add('is-hidden');
         submitButton.disabled = false;
     })
-    .catch(() => {
-        invalidRootFolderHelpText.textContent = 'Path does not exist or is not a directory.';
+    .catch((error) => {
+        invalidRootFolderHelpText.textContent = error.message;
         invalidRootFolderHelpText.classList.remove('is-hidden');
         validRootFolderHelpText.classList.add('is-hidden');
         submitButton.disabled = true;
@@ -175,6 +215,11 @@ document.getElementById('task-creation-form').querySelectorAll('input.label-inpu
             onlyAlphanumericSpacesHyphens,
             'Only alphanumeric characters, spaces, and hyphens allowed.',
         ); 
+
+        let labelLessThan20CharsValidation = new FormValidationControl(
+            inputElement,
+            (value) => value.length <= 20,
+        )
 
         let otherLabels = [
             ...inputElement.closest('fieldset').querySelectorAll('input.label-input')
@@ -218,12 +263,19 @@ document.getElementById('task-creation-form').querySelectorAll('input.keybind-in
             'Keybinds are case-insensitive and must be unique.',
         )
 
+        let notUndoKeyValidation = new FormValidationControl(
+            inputElement,
+            notUndoKey,
+            '"Z" and "z" are reserved for undo. Please choose another key.'
+        )
+
         let labelValidationManager = new FormValidationManager(
             bulmaRemoveDanger,
             bulmaSetDanger,
             helpTextElement,
             submitButton,
             keybindsUniqueValidation,
+            notUndoKeyValidation
         );
 
         labelValidationManager.apply_validation();
@@ -239,5 +291,45 @@ document.getElementById('task-creation-form').querySelectorAll('input.keybind-in
 document.getElementById('task-creation-form').addEventListener('submit', function(event) {
     event.preventDefault();
     let formData = new FormData(event.target);
-    console.log(formData);
+    let taskData = generateRequestFromTaskCreationForm(formData);
+    fetch(routes.createTask, {
+        method: 'POST',
+        body: JSON.stringify(taskData),
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(response.statusText);
+        }
+        return response.json();
+    })
+    .then(() => {
+        // Reload the page to show the new task
+        window.location.reload();
+    })
+    .then((error) => {
+        console.error(error);
+        event.target.reset();
+        alert('An error occurred while creating the task.');
+    })
+});
+
+// Handle switching of tabs on user click - task manage modal trigger
+document.querySelectorAll("a.task-manage-modal-trigger").forEach((triggerElement) => {
+    triggerElement.addEventListener("click", (event) => {
+        event.preventDefault();
+        let targetModal = document.getElementById(triggerElement.dataset.target);
+        document.querySelectorAll('li.task-manage-tab').forEach(tab=> { tab.classList.remove('is-active') });
+        document.querySelectorAll('form.new-task-form').forEach(form => {
+            form.reset();
+            form.querySelectorAll('.dynamic-inserted-element').forEach(element => { element.remove() });
+            form.classList.add('is-hidden');
+        });
+
+        triggerElement.closest('li.task-manage-tab').classList.add('is-active');
+        targetModal.classList.remove('is-hidden');
+
+    })
 });

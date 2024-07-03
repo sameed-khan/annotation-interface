@@ -46,10 +46,10 @@
                                                 </div>
                                                 <div class="cell">
                                                     <p class="title is-5">Info</p>
-                                                    <p class="subtitle is-7">Last Updated: {{ task.updated_at.strftime('%B %d, %Y @ %I:%M %p') }}</p>
+                                                    <p class="subtitle is-7">Last Updated: {{ task.updated_at|filter_timestamp }}</p>
                                                     <p class="is-size-7">
                                                         <span>Root Folder:</span>
-                                                        <span class="is-family-monospace">{{task.root_folder}}</span>
+                                                        <span class="is-family-monospace">{{task.root_folder|reduce_slashes}}</span>
                                                     </p>
                                                 </div>
                                                 <div class="cell">
@@ -91,9 +91,31 @@
 
     <!-- Task Creation Modal -->
     <dialog id="task-creation-modal" class="nonbulma-modal">
-        <form id="task-creation-form" action="{{ new_task_route }}" method="post">
+        <div class="tabs is-boxed">
+            <ul>
+                <li class="task-manage-tab is-active">
+                    <a class="task-manage-modal-trigger" data-target="task-creation-form">
+                        <span class="icon is-small"><i class="fas fa-user-edit" aria-hidden="true"></i></span>
+                        <span>Create New</span>
+                    </a>
+                </li>
+                <li class="task-manage-tab">
+                    <a class="task-manage-modal-trigger" data-target="task-import-form">
+                        <span class="icon is-small"><i class="fas fa-hand-pointer" aria-hidden="true"></i></span>
+                        <span>Select Existing</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <form id="task-creation-form" class="new-task-form" action="{{ new_task_route }}" method="post">
             <div class="columns">
                 <div class="column is-half">
+                    <div class="field">
+                        <label class="label">Task Title</label>
+                        <div class="control">
+                            <input id="task-title-input" class="input" type="text" placeholder="Enter title here" name="task-title-input" maxlength=50 required>
+                        </div>
+                    </div>
                     <div class="field">
                         <label class="label">Root Folder Path</label>
                         <div class="control has-icons-left">
@@ -110,7 +132,7 @@
                     <label class="label">Edit Labels and Keybinds</label> 
                     <div class="field is-grouped label-keybind-input-field mb-1">
                         <div class="control is-expanded">
-                            <input name="label-input-0" class="input label-input" type="text" placeholder="Enter label" required>
+                            <input name="label-input-0" class="input label-input" type="text" placeholder="Enter label" maxlength=20 required>
                         </div>
                         <div class="control keybind-control has-text-centered">
                             <input type="text" name="keybind-input-0" class="input keybind-input" autocomplete="off" readonly onfocus="this.removeAttribute('readonly');" />
@@ -118,7 +140,7 @@
                     </div>
                     <div class="field is-grouped label-keybind-input-field mb-1">
                         <div class="control is-expanded">
-                            <input name="label-input-1" class="input label-input" type="text" placeholder="Enter label" required>
+                            <input name="label-input-1" class="input label-input" type="text" placeholder="Enter label" maxlength=20 required>
                         </div>
                         <div class="control keybind-control has-text-centered">
                             <input type="text" name="keybind-input-1" class="input keybind-input" autocomplete="off" readonly onfocus="this.removeAttribute('readonly');" />
@@ -143,6 +165,9 @@
                     <button id="task-creation-form-close-button" class="button is-link is-ghost cancel-close" type="reset">Cancel</button>
                 </div>
             </div>
+        </form>
+        <form id="task-import-form" class="new-task-form is-hidden" action=" {{ existing_task_route }}" method="post">
+            some text and other stuff here
         </form>
     </dialog>
     <dialog id="task-edit-modal" class="nonbulma-modal">

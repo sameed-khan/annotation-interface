@@ -31,6 +31,10 @@ img {
     cursor: pointer;
 }
 
+.no-display {
+    display: none;
+}
+
 .keybind-control {
     width: 6.7rem;
 }

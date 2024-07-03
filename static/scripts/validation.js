@@ -74,6 +74,10 @@ export function onlyAlphaNumeric(value) {
     return /^[a-zA-Z0-9]*$/.test(value);
 }
 
+export function notUndoKey(value) {
+    return value.toLowerCase() !== 'z';
+}
+
 export function onlySingleCharacter(value) {
     return value.length === 1;
 }
@@ -99,4 +103,11 @@ export function partial(func, ...args) {
     return function() {
         return func(...args, ...arguments);
     }
+}
+
+// Escape odd numbered sequences of backslashes to handle Windows path
+const RE_ODD_BACKSLASH_SEQUENCE = /(?<!\\)(\\{1}(?:\\{2})*)(?!\\)/g;
+
+export function escapeBackslashes(str) {
+    return str.replace(RE_ODD_BACKSLASH_SEQUENCE, '$1\\');
 }
