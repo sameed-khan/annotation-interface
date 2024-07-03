@@ -8,7 +8,10 @@ wheels/
 .vscode
 
 # venv
-.venv
+.venv/
+
+# mypy cache
+.mypy_cache/
 
 #sqlite db file
 *.db

@@ -11,6 +11,10 @@ dependencies = [
     "passlib>=1.7.4",
     "alembic>=1.13.2",
     "pytz>=2024.1",
+    "ruff>=0.5.0",
+    "mypy>=1.10.1",
+    "pydantic>=2.8.0",
+    "tzdata>=2024.1",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
@@ -35,3 +39,41 @@ packages = ["src/hfhs_annotation_interface"]
 
 [tool.rye.scripts]
 _litestar = "python -m src.app"
+ruff = "ruff check ."
+ruff-fix = "ruff check --fix ."
+mypy = "mypy ."
+
+[tool.ruff]
+select = ["E", "F", "I", "N", "W", "B", "PYI", "UP", "PLC", "PLE", "PLR", "PLW"]
+ignore = []
+line-length = 100
+
+[tool.ruff.pydocstyle]
+convention = "google"
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.ruff.isort]
+known-first-party = ["hfhs_annotation_interface"]
+
+[tool.mypy]
+plugins = [
+    "pydantic.mypy"
+]
+follow_imports = "silent"
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+disallow_any_generics = true
+check_untyped_defs = true
+no_implicit_reexport = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_types = true
+warn_required_dynamic_aliases = true
+
+[[tool.mypy.overrides]]
+module = "pydantic.*"
+ignore_missing_imports = true

@@ -16,6 +16,8 @@ aiosqlite==0.20.0
 alembic==1.13.2
     # via advanced-alchemy
     # via hfhs-annotation-interface
+annotated-types==0.7.0
+    # via pydantic
 anyio==4.4.0
     # via httpx
     # via litestar
@@ -73,12 +75,20 @@ msgspec==0.18.6
     # via litestar
 multidict==6.0.5
     # via litestar
+mypy==1.10.1
+    # via hfhs-annotation-interface
+mypy-extensions==1.0.0
+    # via mypy
 passlib==1.7.4
     # via hfhs-annotation-interface
 polyfactory==2.16.0
     # via litestar
 pycparser==2.22
     # via cffi
+pydantic==2.8.0
+    # via hfhs-annotation-interface
+pydantic-core==2.20.0
+    # via pydantic
 pygments==2.18.0
     # via rich
 python-dateutil==2.9.0.post0
@@ -95,6 +105,8 @@ rich==13.7.1
     # via rich-click
 rich-click==1.8.3
     # via litestar
+ruff==0.5.0
+    # via hfhs-annotation-interface
 six==1.16.0
     # via jsbeautifier
     # via python-dateutil
@@ -109,9 +121,14 @@ typing-extensions==4.12.2
     # via aiosqlite
     # via alembic
     # via litestar
+    # via mypy
     # via polyfactory
+    # via pydantic
+    # via pydantic-core
     # via rich-click
     # via sqlalchemy
+tzdata==2024.1
+    # via hfhs-annotation-interface
 uvicorn==0.30.1
     # via litestar
 watchfiles==0.22.0
