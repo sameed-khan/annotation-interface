@@ -1,0 +1,42 @@
+<style>
+    :root {
+        --circle-constant: 5rem;
+    }
+    .ring-container{
+        width: var(--circle-constant);
+        height: var(--circle-constant);
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+    }
+
+    .progress-text {
+        transform: rotate(90deg);
+        transform-origin: 50% 50%;
+        fill: var(--bulma-link);
+        font-weight: bold;
+    }
+
+    .progress-ring {
+        fill: transparent;
+        stroke-width: calc(0.1 * var(--circle-constant));
+        cx: calc(0.5 * var(--circle-constant));
+        cy: calc(0.5 * var(--circle-constant));
+        r: calc(0.4 * var(--circle-constant));
+    }
+
+    .pr-circle {
+        stroke: #a5acb9;
+    }
+
+    .pr-path {
+        stroke: #1e3050;
+        stroke-linecap: round;
+        stroke-dasharray: calc(2 * pi * 0.5 * var(--circle-constant));
+        stroke-dashoffset: calc( {{ (task.completed // task.total) if task.total > 0 else 0 }} * 2 * pi * var(--circle-constant))
+    }
+</style>
+<svg class="ring-container">
+    <circle class="progress-ring pr-circle" />
+    <text x="50%" y="50%" text-anchor="middle" dy="0.3em" class="progress-text">{{ (task.completed // task.total) if task.total > 0 else 0 }}%</text>
+    <circle class="progress-ring pr-path" />
+</svg>

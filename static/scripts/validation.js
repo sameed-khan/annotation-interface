@@ -10,8 +10,8 @@ export class FormValidationManager {
         this._uiValidUpdateFunc = uiValidUpdateFunc;
         this._uiInvalidUpdateFunc = uiInvalidUpdateFunc;
         this._helpTextElement = helpTextElement;
-        this._formValidationControls = formValidationControls;
         this._submitButton = submitButton;
+        this._formValidationControls = formValidationControls;
 
         this._helperTextString = '';
         this._formElement = this._formValidationControls[0].formElement; // All form elements should be the same element
@@ -27,7 +27,7 @@ export class FormValidationManager {
         this._submitButton.disabled = false;
     }
 
-    apply_validation() {
+    applyValidation() {
         let allValid = this._formValidationControls.every(control => control.validate());
         if (allValid) {
             this.uiUpdateValid();
@@ -82,12 +82,19 @@ export function onlySingleCharacter(value) {
     return value.length === 1;
 }
 
-export function allItemsUnique(otherValues, checkValue){
-    if ((checkValue.length === 0) || (otherValues.every(v => v === ''))) { return true; }
+/**
+ * 
+ * @param {Array[HTMLElement]} otherValues 
+ * @param {HTMLElement} checkValue 
+ * @returns boolean
+ */
+export function allItemsUnique(checkValues, _){
+    // TODO: Refactor this entire class to be more generic and not enforce function signature
+    if ((checkValues.length === 0) || (checkValues.every(v => v === ''))) { return true; }
 
-    let processedValue = otherValues.map(v => v.toLowerCase().trim().replace(/\s/g, ''));
-    let processedCheck = checkValue.toLowerCase().trim().replace(/\s/g, '');
-    return processedValue.filter(v => v === processedCheck).length <= 1;
+    const b = checkValues.map(v => v.toLowerCase().trim().replace(/\s/g, ''));
+    const processedValues = new Set(b); 
+    return processedValues.size === b.length;
 }
 
 // UI Update Functions
