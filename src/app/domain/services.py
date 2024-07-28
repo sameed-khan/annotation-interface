@@ -1,8 +1,9 @@
-from typing import Any
+from typing import Any, Sequence
 
 from advanced_alchemy.service import SQLAlchemyAsyncRepositoryService
 from litestar.exceptions import NotAuthorizedException
 from litestar.status_codes import HTTP_401_UNAUTHORIZED
+from sqlalchemy import select
 
 from app.domain.repositories import (
     AnnotationRepository,
@@ -59,6 +60,21 @@ class TaskService(SQLAlchemyAsyncRepositoryService[Task]):
     def __init__(self, **repo_kwargs: Any) -> None:
         self.repository: TaskRepository = self.repository_type(**repo_kwargs)  # type: ignore
         self.model_type = self.repository.model_type
+
+    async def get_all_tasks(self) -> Sequence[Task]:
+        """Get all tasks."""
+        stmt = select(Task).order_by(Task.created_at).distinct()
+        results = await self.repository.session.execute(stmt)
+        return results.scalars().unique().all()
+
+    async def get_many_by_id(self, identifiers: Sequence[str | int]) -> Sequence[Task]:
+        stmt = select(Task).where(Task.id.in_(identifiers))
+        results = await self.repository.session.execute(stmt)
+        res = results.scalars().all()
+        if len(res) > 0:
+            return res
+
+        return []
 
 
 class LabelKeybindService(SQLAlchemyAsyncRepositoryService[LabelKeybind]):

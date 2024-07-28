@@ -36,13 +36,12 @@ class Task(UUIDAuditBase):
     root_folder: Mapped[str] = mapped_column(String, nullable=False)
     creator_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
 
-    creator = relationship("User", back_populates="created_tasks", lazy="selectin")
+    creator = relationship("User", back_populates="created_tasks", lazy="joined")
     contributors = relationship(
         "User",
         secondary=user_tasks,
         back_populates="assigned_tasks",
         lazy="selectin",
-        cascade="all, delete",
     )
     annotations = relationship(
         "Annotation", back_populates="associated_task", lazy="selectin", cascade="all, delete"
@@ -61,7 +60,7 @@ class Annotation(BigIntAuditBase):
     filepath: Mapped[str] = mapped_column(String, nullable=False)
     task_id: Mapped[UUID] = mapped_column(ForeignKey("tasks.id"), nullable=False)
 
-    associated_task = relationship("Task", back_populates="annotations", lazy="selectin")
+    associated_task = relationship("Task", back_populates="annotations", lazy="joined")
 
 
 class LabelKeybind(UUIDAuditBase):
@@ -72,9 +71,5 @@ class LabelKeybind(UUIDAuditBase):
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
     task_id: Mapped[UUID] = mapped_column(ForeignKey("tasks.id"))
 
-    user = relationship(
-        "User", back_populates="label_keybinds", lazy="selectin", cascade="all, delete"
-    )
-    task = relationship(
-        "Task", back_populates="label_keybinds", lazy="selectin", cascade="all, delete"
-    )
+    user = relationship("User", back_populates="label_keybinds", lazy="joined")
+    task = relationship("Task", back_populates="label_keybinds", lazy="joined")

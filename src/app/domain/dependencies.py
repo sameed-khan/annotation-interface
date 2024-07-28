@@ -2,7 +2,7 @@
 from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.domain.schema import Annotation, LabelKeybind, Task, User
 from app.domain.services import AnnotationService, LabelKeybindService, TaskService, UserService
@@ -26,7 +26,7 @@ async def provide_tasks_service(db_session: AsyncSession) -> AsyncGenerator[Task
     async with TaskService.new(
         session=db_session,
         load=[
-            selectinload(Task.creator),
+            joinedload(Task.creator),
             selectinload(Task.contributors),
             selectinload(Task.annotations),
             selectinload(Task.label_keybinds),
@@ -42,8 +42,8 @@ async def provide_label_keybinds_service(
     async with LabelKeybindService.new(
         session=db_session,
         load=[
-            selectinload(LabelKeybind.user),
-            selectinload(LabelKeybind.task),
+            joinedload(LabelKeybind.user),
+            joinedload(LabelKeybind.task),
         ],
     ) as service:
         yield service
@@ -56,7 +56,7 @@ async def provide_annotations_service(
     async with AnnotationService.new(
         session=db_session,
         load=[
-            selectinload(Annotation.associated_task),
+            joinedload(Annotation.associated_task),
         ],
     ) as service:
         yield service

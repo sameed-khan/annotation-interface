@@ -26,3 +26,5 @@ CHECK_USERNAME = "/api/users/check_username"
 
 # TASK
 CREATE_TASK = "/api/tasks/create"
+ASSIGN_TASK = "/api/tasks/assign"
+UNASSIGN_TASK = "/api/tasks/unassign"

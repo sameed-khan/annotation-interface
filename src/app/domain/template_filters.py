@@ -14,3 +14,7 @@ def format_and_localize_timestamp(value: datetime):  # TODO: get timezone from e
     tz = ZoneInfo("America/Detroit")
     localized_value = value.astimezone(tz)
     return localized_value.strftime("%B %d, %Y @ %I:%M %p")
+
+
+def truncate_string(value: str, length: int) -> str:
+    return value[:length] + "..." if len(value) > length else value

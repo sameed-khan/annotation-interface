@@ -1,5 +1,6 @@
 import os
-from typing import Annotated, Any, Dict
+from typing import Annotated, Any, Dict, Sequence
+from uuid import UUID
 
 from litestar import Controller, Request, get, post
 from litestar.di import Provide
@@ -7,7 +8,7 @@ from litestar.enums import RequestEncodingType
 from litestar.exceptions import NotFoundException
 from litestar.params import Body
 from litestar.response import Redirect, Response, Template
-from litestar.status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_404_NOT_FOUND
+from litestar.status_codes import HTTP_200_OK, HTTP_201_CREATED
 
 from app.domain import constants, urls
 from app.domain.dependencies import (
@@ -24,7 +25,10 @@ from app.domain.services import AnnotationService, LabelKeybindService, TaskServ
 class PageController(Controller):
     """Controller for serving pages to users."""
 
-    dependencies = {"users_service": Provide(provide_users_service)}
+    dependencies = {
+        "users_service": Provide(provide_users_service),
+        "tasks_service": Provide(provide_tasks_service),
+    }
 
     @get(
         path="/",
@@ -61,30 +65,71 @@ class PageController(Controller):
         status_code=HTTP_200_OK,
     )
     async def panel_page(
-        self, users_service: UserService, request: Request[User, Any, Any]
+        self,
+        users_service: UserService,
+        tasks_service: TaskService,
+        request: Request[User, Any, Any],
     ) -> Template:
         """Serve task management page."""
 
         user_id = request.session.get("user_id")
         user = await users_service.get(user_id)  # exception here means that authentication failed
+        user_tasks = user.assigned_tasks
 
+        # Populate assigned tasks list
         task_info_as_dicts = []
-        for task in user.assigned_tasks:
+        for task in user_tasks:
             task_annotations = task.annotations
-            creator_name = task.creator.username
+            creator_name = task.creator.username if task.creator is not None else "Unknown"
             task_info_as_dicts.append(
                 {
                     "labeled_count": len([a for a in task_annotations if a.labeled]),
                     "total_count": len(task_annotations),
                     "creator_name": creator_name,
-                    "new_task_route": urls.CREATE_TASK,
+                    "total": len(task_annotations),
+                    "completed": len([a for a in task_annotations if a.labeled]),
                     **task.to_dict(),
                 }
             )
 
-        print(task_info_as_dicts)
+        # Populate user's label keybinds for each assigned task
+        label_keybinds_by_task = []
+        for task in user_tasks:
+            label_keybinds = task.label_keybinds
+            label_keybinds_by_task.append(
+                [lk.to_dict() for lk in label_keybinds if lk.user_id == user_id]
+            )
+
+        # Populate global tasks list
+        all_tasks: Sequence[Task] = await tasks_service.get_all_tasks()
+        avail_tasks = [t for t in all_tasks if t not in user.assigned_tasks]
+        global_task_info_as_dicts: list[dict[str, str | int]] = []
+        for task in avail_tasks:
+            creator_name = task.creator.username if task.creator is not None else "Unknown"
+            global_task_info_as_dicts.append(
+                {
+                    "labeled_count": len([a for a in task.annotations if a.labeled]),
+                    "total_count": len(task.annotations),
+                    "creator_name": creator_name,
+                    "total": len(task.annotations),
+                    "completed": len([a for a in task.annotations if a.labeled]),
+                    **task.to_dict(),
+                }
+            )
+
+        print(f"User task list: {task_info_as_dicts}")
+        print(f"Global task list: {global_task_info_as_dicts}")
+        print(f"Label keybinds: {label_keybinds_by_task}")
+
         return Template(
-            template_name="panel.html.jinja2", context={"task_list": task_info_as_dicts}
+            template_name="panel.html.jinja2",
+            context={
+                "task_list": task_info_as_dicts,
+                "global_task_list": global_task_info_as_dicts,
+                "new_task_route": urls.CREATE_TASK,
+                "existing_task_route": urls.ASSIGN_TASK,
+                "task_label_keybinds": label_keybinds_by_task,
+            },
         )
 
 
@@ -92,7 +137,10 @@ class UserController(Controller):
     """Controller for user CRUD and authentication operations."""
 
     # TODO: get route for user?
-    dependencies = {"users_service": Provide(provide_users_service)}
+    dependencies = {
+        "users_service": Provide(provide_users_service),
+        "tasks_service": Provide(provide_tasks_service),
+    }
 
     @get(
         path=urls.CHECK_USERNAME,
@@ -164,6 +212,7 @@ class TaskController(Controller):
     """Controller for task CRUD operations."""
 
     dependencies = {
+        "users_service": Provide(provide_users_service),
         "tasks_service": Provide(provide_tasks_service),
         "annotations_service": Provide(provide_annotations_service),
         "label_keybinds_service": Provide(provide_label_keybinds_service),
@@ -245,10 +294,63 @@ class TaskController(Controller):
             content={"message": "Task successfully created"}, status_code=HTTP_201_CREATED
         )
 
+    @post(
+        path=urls.ASSIGN_TASK,
+        operation_id="assignTask",
+        name="task:assign_task",
+        exclude_from_auth=False,
+        summary="Assign task to current user",
+        status_code=HTTP_200_OK,
+    )
+    async def assign_task(
+        self,
+        users_service: UserService,
+        tasks_service: TaskService,
+        data: dict[str, list[str]],
+        request: Request[User, Any, Any],
+    ) -> Response[Dict[str, str]]:
+        """Assign task to current user."""
+
+        user_id = request.user.id
+        user = await users_service.get_one(id=user_id)
+        tasks = await tasks_service.get_many_by_id(data["tasks_to_add_ids"])
+        user.assigned_tasks.extend(tasks)
+        return Response(content={"message": "Task successfully assigned"}, status_code=HTTP_200_OK)
+
+    @get(
+        path=urls.UNASSIGN_TASK,
+        operation_id="unassignTask",
+        name="task:unassign_task",
+        exclude_from_auth=False,
+        summary="Unassign current user from selected task",
+        status_code=HTTP_200_OK,
+    )
+    async def unassign_task(
+        self,
+        users_service: UserService,
+        tasks_service: TaskService,
+        task_id: str,
+        request: Request[User, Any, Any],
+    ) -> Response[Dict[str, str]] | NotFoundException:
+        """Delete a specified task from current user."""
+        # TODO: figure out why middleware throws an exception if you run just getting request.user
+        user_id = request.user.id
+        user = await users_service.get_one(id=user_id)
+        bool_mask = [UUID(task_id) == t.id for t in user.assigned_tasks]
+        try:
+            _ = user.assigned_tasks.pop(bool_mask.index(True))
+        except ValueError:
+            msg = "Task not found in user's task list"
+            return NotFoundException(msg)
+
+        return Response(content={"message": "Task successfully deleted"}, status_code=HTTP_200_OK)
+
 
 class SystemController(Controller):
     """Controller for exposing system information."""
 
+    # TODO: Throws internal server error since msgspec for some reason cannot handle serializing
+    # NotFoundException which is extremely strange.
     @get(
         path=urls.CHECK_PATH,
         operation_id="checkPath",
@@ -267,11 +369,11 @@ class SystemController(Controller):
 
         if not os.path.exists(path):
             msg = "Path does not exist"
-            return NotFoundException(msg, status_code=HTTP_404_NOT_FOUND)
+            return NotFoundException(msg)
 
         elif not os.path.isdir(path):
             msg = "Path is not a directory"
-            return NotFoundException(msg, status_code=HTTP_404_NOT_FOUND)
+            return NotFoundException(msg)
 
         valid_files = [
             fl

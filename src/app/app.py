@@ -23,7 +23,11 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from app.domain import urls
 from app.domain.controllers import PageController, SystemController, TaskController, UserController
 from app.domain.schema import User
-from app.domain.template_filters import format_and_localize_timestamp, reduce_slashes
+from app.domain.template_filters import (
+    format_and_localize_timestamp,
+    reduce_slashes,
+    truncate_string,
+)
 
 # class Base(DeclarativeBase):
 #     pass
@@ -413,7 +417,7 @@ async def retrieve_user_handler(
     async with AsyncSession(engine) as db_session:
         query = select(User).where(User.id == user_id)
         result = await db_session.execute(query)
-        return result.scalars().one_or_none()
+        return result.scalars().unique().one_or_none()
 
 
 session_auth = SessionAuth[User, ClientSideSessionBackend](
@@ -433,6 +437,7 @@ jinja_env.filters.update(
     {
         "reduce_slashes": reduce_slashes,
         "filter_timestamp": format_and_localize_timestamp,
+        "truncate_string": truncate_string,
     }
 )
 

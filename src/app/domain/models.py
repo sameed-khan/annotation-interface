@@ -3,8 +3,7 @@ import re
 from typing import List, Self, TypedDict
 from urllib.parse import unquote
 
-from pydantic import (BaseModel, ConfigDict, Field, StringConstraints,
-                      model_validator)
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 from pydantic.functional_validators import AfterValidator, BeforeValidator
 from typing_extensions import Annotated
 
