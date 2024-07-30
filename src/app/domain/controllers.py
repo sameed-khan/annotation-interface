@@ -72,8 +72,10 @@ class PageController(Controller):
     ) -> Template:
         """Serve task management page."""
 
-        user_id = request.session.get("user_id")
-        user = await users_service.get(user_id)  # exception here means that authentication failed
+        user = request.user
+        user_id = user.id
+        # user_id = request.session.get("user_id")
+        # user = await users_service.get(user_id)  # exception here means that authentication failed
         user_tasks = user.assigned_tasks
 
         # Populate assigned tasks list
@@ -302,10 +304,11 @@ class TaskController(Controller):
         summary="Assign task to current user",
         status_code=HTTP_200_OK,
     )
-    async def assign_task(
+    async def assign_task(  # noqa: PLR0913 (too many arguments)
         self,
         users_service: UserService,
         tasks_service: TaskService,
+        label_keybinds_service: LabelKeybindService,
         data: dict[str, list[str]],
         request: Request[User, Any, Any],
     ) -> Response[Dict[str, str]]:
@@ -314,6 +317,37 @@ class TaskController(Controller):
         user_id = request.user.id
         user = await users_service.get_one(id=user_id)
         tasks = await tasks_service.get_many_by_id(data["tasks_to_add_ids"])
+
+        tasks_to_update = []
+        new_lks = []
+        for task in tasks:
+            if any([user_id == lk.user_id for lk in task.label_keybinds]):
+                continue
+
+            lks_to_create = []
+            for i, lk in enumerate(task.label_keybinds):
+                lks_to_create.append(
+                    {
+                        "label": lk.label,
+                        "keybind": constants.DEFAULT_KEYBINDS_IN_ORDER[i],
+                        "user_id": user_id,
+                        "task_id": task.id,
+                    }
+                )
+
+            # The readability of the code below is worth the performance hit (to me) of using
+            # create_many multiple times inside the for loop rather than collecting all of the
+            # LabelKeybind objects to create and then creating them all at once.
+            new_lks.append(
+                await label_keybinds_service.create_many(
+                    data=lks_to_create, auto_commit=True, auto_expunge=True
+                )
+            )
+            tasks_to_update.append(task)
+
+        for task, lk in zip(tasks_to_update, new_lks):
+            task.label_keybinds.extend(lk)
+
         user.assigned_tasks.extend(tasks)
         return Response(content={"message": "Task successfully assigned"}, status_code=HTTP_200_OK)
 
