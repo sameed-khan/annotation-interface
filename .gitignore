@@ -19,6 +19,14 @@ wheels/
 # temp scripts for reloading unloading sql db
 *.sql
 
+.tmp
+
 # Exclude downloaded files for offline work
-static/assets/sample/
-static/assets/openseadragon/
+front/assets/
+front/shared/styles/bulma-checkbox.css
+front/shared/styles/bulma.css
+front/pages/label/openseadragon/
+
+
+# node modules of course
+node_modules/
