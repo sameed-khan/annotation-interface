@@ -1,50 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    {# <!-- <link rel="stylesheet" href="../styles.css">
+    {#
+    <!-- <link rel="stylesheet" href="../styles.css">
     <script src="../assets/openseadragon/openseadragon.min.js"></script>
-    <script defer src="../scripts/label.js"></script> --> #}
+    #}
 
-    <link rel="stylesheet" href="/static/styles.css">
-    <script src="/static/assets/openseadragon/openseadragon.min.js"></script>
+    <link rel="stylesheet" href="/static/styles.css" />
     <script type="module" defer src="/static/scripts/label.js"></script>
-    
+
     <title>Labeling Interface</title>
-</head>
-<body class="label-page-body" data-task_uuid="{{ task_uuid }}">
+  </head>
+  <body class="label-page-body" data-task_uuid="{{ task_uuid }}">
     <header class="mb-3">
-        <div class="columns" style="background-color: #040064">
-            <div id="progress-text-display" class="column is-half is-family-monospace has-text-white is-size-6 has-text-left has-text-weight-medium mt-1 ml-2"> {{labeled}} / {{total}} labeled </div>
-            <div class="column is-half is-flex is-justify-content-end has-text-white is-size-6 has-text-right">
-                <progress style="position: absolute; max-width: 30%;" class="progress is-link mt-3 mr-4" value="{{ progress_percent }}" max="100">{{ progress_percent }}%</progress>
-            </div>
-            {# <div class="column is-one-third is-family-monospace has-text-white is-size-6 has-text-centered has-text-weight-medium mt-1">{{rate_labeled}} images / minute</div> #}
+      <div class="columns" style="background-color: #040064">
+        <div
+          id="progress-text-display"
+          class="column is-half is-family-monospace has-text-white is-size-6 has-text-left has-text-weight-medium mt-1 ml-2"
+        >
+          {{ labeled }} / {{ total }} labeled
         </div>
+        <div
+          class="column is-half is-flex is-justify-content-end has-text-white is-size-6 has-text-right"
+        >
+          <progress
+            style="position: absolute; max-width: 30%"
+            class="progress is-link mt-3 mr-4"
+            value="{{ progress_percent }}"
+            max="100"
+          >
+            {{ progress_percent }}%
+          </progress>
+        </div>
+        {#
+        <div
+          class="column is-one-third is-family-monospace has-text-white is-size-6 has-text-centered has-text-weight-medium mt-1"
+        >
+          {{ rate_labeled }} images / minute
+        </div>
+        #}
+      </div>
     </header>
     <main class="is-flex-grow-1 label-page-main">
-        <div id="osd-viewer" class="container mt-2" data-image_id=""></div>
-        <div class="columns mt-3">
-            <div class="column is-fullwidth mx-6">
-                <div class="grid is-flex is-flex-wrap-wrap is-justify-content-center">
-                    {% for label_keybind in label_keybinds %}
-                        <div id="btn-{{ label_keybind.keybind }}" class="box label-btn p-5" data-label="{{ label_keybind.label }}" data-keybind="{{ label_keybind.keybind }}">
-                            <p class="keybind-label">{{ label_keybind.keybind }}</p>
-                            <p class="label-text is-size-5-widescreen is-size-7">{{ label_keybind.label }}</p>
-                        </div>
-                    {% endfor %}
-                </div>
+      <div id="osd-viewer" class="container mt-2" data-image_id=""></div>
+      <div class="columns mt-3">
+        <div class="column is-fullwidth mx-6">
+          <div class="grid is-flex is-flex-wrap-wrap is-justify-content-center">
+            {% for label_keybind in label_keybinds %}
+            <div
+              id="btn-{{ label_keybind.keybind }}"
+              class="box label-btn p-5"
+              data-label="{{ label_keybind.label }}"
+              data-keybind="{{ label_keybind.keybind }}"
+            >
+              <p class="keybind-label">{{ label_keybind.keybind }}</p>
+              <p class="label-text is-size-5-widescreen is-size-7">
+                {{ label_keybind.label }}
+              </p>
             </div>
+            {% endfor %}
+          </div>
         </div>
-        <div class="notification-area"></div>
+      </div>
+      <div class="notification-area"></div>
     </main>
     <footer class="info-and-controls mt-auto">
-        <div class="ego">Sameed Khan, 2024</div>
-        <div class="additional-controls">
-            <p><em>Additional Controls</em></p>
-            <p><strong>Ctrl+Z</strong>: Return to previous label</p>
-        </div>
+      <div class="ego">Sameed Khan, 2024</div>
+      <div class="additional-controls">
+        <p><em>Additional Controls</em></p>
+        <p><strong>Ctrl+Z</strong>: Return to previous label</p>
+      </div>
     </footer>
-</body>
+  </body>
+</html>

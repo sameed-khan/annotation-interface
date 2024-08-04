@@ -1,19 +1,29 @@
-import { routes } from './routes.js';
-import { 
-    FormValidationManager, FormValidationControl, onlyAlphaNumeric, 
-    onlyAlphanumericSpacesHyphens, onlySingleCharacter, allItemsUnique, bulmaRemoveDanger,
-    bulmaSetDanger, partial, escapeBackslashes, notUndoKey
- } from './validation.js';
+import {routes} from '../../shared/scripts/routes.js';
+import {
+  FormValidationManager,
+  FormValidationControl,
+  onlyAlphaNumeric,
+  onlyAlphanumericSpacesHyphens,
+  onlySingleCharacter,
+  allItemsUnique,
+  bulmaRemoveDanger,
+  bulmaSetDanger,
+  partial,
+  escapeBackslashes,
+  notUndoKey,
+} from './validation.js';
 
- // GLOBAL VARIABLES
- let lkSelectControls = 2 // the html template always starts with 2 label-keybind select fields
+// GLOBAL VARIABLES
+let lkSelectControls = 2; // the html template always starts with 2 label-keybind select fields
 
 function populateModal(target, taskData) {
-    target.querySelector('form').innerHTML = `
+  target.querySelector('form').innerHTML = `
         <div class="columns">
             <fieldset name="label-keybind-input-form-group" class="column is-half">
                 <label class="label">Edit Labels and Keybinds</label> 
-                ${taskData.label_keybinds.map(lk => `
+                ${taskData.label_keybinds
+                  .map(
+                    (lk) => `
                     <div class="field label-keybind-input-field is-flex is-flex-wrap-nowrap mb-1">
                         <div class="control is-flex-grow-1">
                             <input class="input" type="text" value="${lk.label}" required>
@@ -21,18 +31,25 @@ function populateModal(target, taskData) {
                         <div class="control is-flex-grow-0">
                             <div class="select">
                                 <select>
-                                    ${['A', 'S', 'D', 'F', 'J', 'K', 'L', ';'].map(key => 
-                                        `<option ${key === lk.keybind ? 'selected' : ''}>${key}</option>`
-                                    ).join('')}
+                                    ${['A', 'S', 'D', 'F', 'J', 'K', 'L', ';']
+                                      .map(
+                                        (key) =>
+                                          `<option ${key === lk.keybind ? 'selected' : ''}>${key}</option>`
+                                      )
+                                      .join('')}
                                 </select>
                             </div>
                         </div>
                     </div>
-                `).join('')}
+                `
+                  )
+                  .join('')}
             </fieldset>
             <fieldset name="file-select-input-form-group" class="column is-half">
                 <label class="label">Select Images to Include</label>
-                ${taskData.files.map(file => `
+                ${taskData.files
+                  .map(
+                    (file) => `
                     <div class="field">
                         <div class="control task-file-select-control">
                             <label class="b-checkbox checkbox task-file-select">
@@ -42,7 +59,9 @@ function populateModal(target, taskData) {
                             </label>
                         </div>
                     </div>
-                `).join('')}
+                `
+                  )
+                  .join('')}
             </fieldset>
         </div>
         <div class="field is-grouped">
@@ -57,155 +76,161 @@ function populateModal(target, taskData) {
 }
 
 function generateRequestFromTaskCreationForm(formData) {
-    /**
-     * [                                        {
-     *  [root-folder-path, 'path/to/root'],         root: 'path/to/root', 
-     *                                       =>     label_keybinds: [
-     *  [label1, keybind1],                                 {label: 'label1', keybind: 'keybind1'}, 
-     *  [label2, keybind2],                                 {label: 'label2', keybind: 'keybind2'}, 
-     *  ...]                                            ...]
-     *                                          } 
-     */
+  /**
+   * [                                        {
+   *  [root-folder-path, 'path/to/root'],         root: 'path/to/root',
+   *                                       =>     label_keybinds: [
+   *  [label1, keybind1],                                 {label: 'label1', keybind: 'keybind1'},
+   *  [label2, keybind2],                                 {label: 'label2', keybind: 'keybind2'},
+   *  ...]                                            ...]
+   *                                          }
+   */
 
-    let taskData = {
-        root: null,
-        label_keybinds: [],
+  let taskData = {
+    title: null,
+    root: null,
+    label_keybinds: [],
+  };
+
+  for (const [key, value] of formData.entries()) {
+    if (key.startsWith('label-input-')) {
+      let lkIndex = key.split('-')[2];
+      let lk = taskData.label_keybinds[lkIndex] || {};
+      lk.label = value;
+      taskData.label_keybinds[lkIndex] = lk;
+    } else if (key.startsWith('keybind-input-')) {
+      let lkIndex = key.split('-')[2];
+      let lk = taskData.label_keybinds[lkIndex] || {};
+      lk.keybind = value;
+      taskData.label_keybinds[lkIndex] = lk;
+    } else if (key === 'root-folder-input') {
+      let backSlashEscaped = escapeBackslashes(value);
+      taskData.root = encodeURIComponent(backSlashEscaped);
+    } else if (key === 'task-title-input') {
+      taskData.title = value;
+    } else {
+      throw new Error('Invalid form data key found: ' + key);
     }
+  }
 
-    for (const [key, value] of formData.entries()) {
-        if (key.startsWith('label-input-')) {
-            let lkIndex = key.split('-')[2];
-            let lk = taskData.label_keybinds[lkIndex] || {};
-            lk.label = value;
-            taskData.label_keybinds[lkIndex] = lk;
-        } else if (key.startsWith('keybind-input-')) {
-            let lkIndex = key.split('-')[2];
-            let lk = taskData.label_keybinds[lkIndex] || {};
-            lk.keybind = value;
-            taskData.label_keybinds[lkIndex] = lk;
-        } else if (key === 'root-folder-input') {
-            let backSlashEscaped = escapeBackslashes(value);
-            taskData.root = encodeURIComponent(backSlashEscaped);
-        } else if (key === 'task-title-input') {
-            taskData.title = value;
-        } else {
-            throw new Error('Invalid form data key found: ' + key);
-        }
-    }
-
-    return taskData;
+  return taskData;
 }
 
 function generateRequestFromTaskAssignmentForm(formData) {
-    /** 
-     * formData: { task-checkbox: [task_id1, task_id2, ...] }
-    */
+  /**
+   * formData: { task-checkbox: [task_id1, task_id2, ...] }
+   */
 
-    let taskData = {
-        "tasks_to_add_ids": formData.values().toArray()
-    } 
+  let taskData = {
+    tasks_to_add_ids: formData.values().toArray(),
+  };
 
-    return taskData;
+  return taskData;
 }
 
 // EVENT HANDLER FUNCTIONS
 function handleTaskCreateModalOpen(event) {
-    const modalTrigger = event.target.closest('.js-modal-trigger');
-    const m = modalTrigger.dataset.target;
-    const target = document.getElementById(m);
-    target.showModal();
+  const modalTrigger = event.target.closest('.js-modal-trigger');
+  const m = modalTrigger.dataset.target;
+  const target = document.getElementById(m);
+  target.showModal();
 }
 
 function handleTaskEditModalOpen(event) {
-    modalTrigger = event.target.closest('.js-modal-trigger.edit-keybind-button');
-    const m = modalTrigger.dataset.target;
-    const target = document.getElementById(m);
-    fetch(`/panel/get_task_keybinds?task_id=${encodeURIComponent(taskId)}`)
-    .then(response => response.json())
-    .then(data => {
-        populateModal(target, data)
-        target.showModal();
+  modalTrigger = event.target.closest('.js-modal-trigger.edit-keybind-button');
+  const m = modalTrigger.dataset.target;
+  const target = document.getElementById(m);
+  fetch(`/panel/get_task_keybinds?task_id=${encodeURIComponent(taskId)}`)
+    .then((response) => response.json())
+    .then((data) => {
+      populateModal(target, data);
+      target.showModal();
     })
-    .catch(error => {
-        alert('An error occurred while fetching task data. Please contact the developer.');
-        console.log(error)
-    })
+    .catch((error) => {
+      alert('An error occurred while fetching task data. Please contact the developer.');
+      console.log(error);
+    });
 }
 
 function handleTaskDeleteButtonClick(event) {
-    const taskId = event.currentTarget.dataset.task_id;
-    fetch(`${routes.unassignTask}?task_id=${encodeURIComponent(taskId)}`)
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(response.statusText);
-        }
-        return response.json();
+  const taskId = event.currentTarget.dataset.task_id;
+  fetch(`${routes.unassignTask}?task_id=${encodeURIComponent(taskId)}`)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+      return response.json();
     })
     .then(() => {
-        window.location.reload();
+      window.location.reload();
     })
-    .catch(error => {
-        console.error(error);
-        alert('An error occurred while deleting the task.');
+    .catch((error) => {
+      console.error(error);
+      alert('An error occurred while deleting the task.');
     });
 }
 
 /**
- * 
- * @param {HTMLDialogElement} modal 
- * @param {Event} close 
+ *
+ * @param {HTMLDialogElement} modal
+ * @param {Event} close
  */
 function handleModalClose(event) {
-    const modal = event.target.closest('dialog');
-    const rect = modal.getBoundingClientRect();
-    const isInModal=(rect.top <= event.clientY && event.clientY <= rect.top + rect.height
-        && rect.left <= event.clientX && event.clientX <= rect.left + rect.width);
-    if (!isInModal) {
-        modal.close();
-    }
+  const modal = event.target.closest('dialog');
+  const rect = modal.getBoundingClientRect();
+  const isInModal =
+    rect.top <= event.clientY &&
+    event.clientY <= rect.top + rect.height &&
+    rect.left <= event.clientX &&
+    event.clientX <= rect.left + rect.width;
+  if (!isInModal) {
+    modal.close();
+  }
 }
 
 /**
- * 
- * @param {HTMLElement} modal_trigger 
- * @param {Event} close 
+ *
+ * @param {HTMLElement} modal_trigger
+ * @param {Event} close
  */
 /**
- * 
- * @param {Event} close 
+ *
+ * @param {Event} close
  */
 function handleModalCloseByCancel(event) {
-    const modal = event.target.closest('dialog');
-    modal.close();
-    modal.querySelectorAll('.dynamic-inserted-element').forEach(element => { element.remove() })
-} 
+  const modal = event.target.closest('dialog');
+  modal.close();
+  modal.querySelectorAll('.dynamic-inserted-element').forEach((element) => {
+    element.remove();
+  });
+}
 /**
- * 
+ *
  * @param {HTMLElement} triggerElement
- * @param {Event} event 
+ * @param {Event} event
  */
 function handleTaskManageModalTabSwitch(event) {
-    event.preventDefault();
-    event.stopPropagation();
+  event.preventDefault();
+  event.stopPropagation();
 
-    const targetAnchor = event.target.closest('a.task-manage-modal-trigger');
-    const targetTab = event.target.closest('li.task-manage-tab');
-    const targetModal = event.target.closest('dialog');
-    const targetForm = document.getElementById(targetAnchor.dataset.target);
+  const targetAnchor = event.target.closest('a.task-manage-modal-trigger');
+  const targetTab = event.target.closest('li.task-manage-tab');
+  const targetModal = event.target.closest('dialog');
+  const targetForm = document.getElementById(targetAnchor.dataset.target);
 
-    targetModal.querySelectorAll('li.task-manage-tab').forEach(tab => tab.classList.remove('is-active'));
-    targetTab.classList.add('is-active');
+  targetModal
+    .querySelectorAll('li.task-manage-tab')
+    .forEach((tab) => tab.classList.remove('is-active'));
+  targetTab.classList.add('is-active');
 
-    targetModal.querySelectorAll('form').forEach(form => form.classList.add('is-hidden'));
-    targetForm.classList.remove('is-hidden');
-
-
+  targetModal.querySelectorAll('form').forEach((form) => form.classList.add('is-hidden'));
+  targetForm.classList.remove('is-hidden');
 }
 
 function handleAddLabelButtonClick(event) {
-    // create a new div
-    let newDiv = document.createElement('div');
-    let newElementHTML = `
+  // create a new div
+  let newDiv = document.createElement('div');
+  let newElementHTML = `
         <div class="field is-grouped label-keybind-input-field dynamic-inserted-element mb-1">
             <div class="control is-expanded">
                 <input name="label-input-${lkSelectControls}" class="input label-input" type="text" placeholder="Enter label" required>
@@ -216,232 +241,262 @@ function handleAddLabelButtonClick(event) {
         </div>
     `;
 
-    // get the last instance of the above type of element and insert as next sibling
-    let endBoundaryElement = document.querySelector('.dynamic-insert-end-boundary');
-    let parentFieldset = document.getElementById('task-creation-lk-fieldset');
-    parentFieldset.insertBefore(newDiv, endBoundaryElement);
+  // get the last instance of the above type of element and insert as next sibling
+  const controlElementId = event.currentTarget.closest('.control').id;
+  let endBoundaryElement = document.querySelector(
+    `.dynamic-insert-end-boundary:has(+ #${controlElementId})`
+  );
+  let parentFieldset = endBoundaryElement.closest('fieldset');
+  parentFieldset.insertBefore(newDiv, endBoundaryElement);
 
-    // now that the element is inserted, we can safely change the outerHTML
-    newDiv.outerHTML = newElementHTML;
+  // now that the element is inserted, we can safely change the outerHTML
+  newDiv.outerHTML = newElementHTML;
 
-    // increment the lkSelectControls counter
-    lkSelectControls++;
+  // increment the lkSelectControls counter
+  lkSelectControls++;
 }
 
 // document.queryselectorall('.task-display-card .media-content').foreach(content => {
 /**
- * 
- * @param {HTMLElement} content 
+ *
+ * @param {HTMLElement} content
  */
 function handleTaskCardMouseEvents(event) {
-    cardParent = event.target.closest('.task-display-card');
-    if (event.type === 'mouseenter') {
-        cardParent.style.filter = 'brightness(90%)';
-    } else if (event.type === 'mouseleave') {
-        cardParent.style.filter = '';
-    } else if (event.type === 'click') {
-        let url = new URL(window.location.origin);
-        url.pathname = '/label';
-        url.searchParams.append('task_id', cardParent.dataset.task_id);
-        window.location.href = url.href;
-    }
+  cardParent = event.target.closest('.task-display-card');
+  if (event.type === 'mouseenter') {
+    cardParent.style.filter = 'brightness(90%)';
+  } else if (event.type === 'mouseleave') {
+    cardParent.style.filter = '';
+  } else if (event.type === 'click') {
+    let url = new URL(window.location.origin);
+    url.pathname = '/label';
+    url.searchParams.append('task_id', cardParent.dataset.task_id);
+    window.location.href = url.href;
+  }
 }
 
 //.root-folder-input
 function handleRootFolderFormValidation(event) {
-    let rootFolderInput = document.getElementById('root-folder-input');
-    let submitButton = document.getElementById('task-creation-submit-button');
-    let invalidRootFolderHelpText = document.getElementById('root-folder-help-text-danger');
-    let validRootFolderHelpText = document.getElementById('root-folder-help-text-info');
+  let rootFolderInput = document.getElementById('root-folder-input');
+  let submitButton = document.getElementById('task-creation-submit-button');
+  let invalidRootFolderHelpText = document.getElementById('root-folder-help-text-danger');
+  let validRootFolderHelpText = document.getElementById('root-folder-help-text-info');
 
-    fetch(`${routes.checkPath}?path=${encodeURIComponent(rootFolderInput.value)}`)
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(response.statusText);
-        }
-        return response.json();
+  fetch(`${routes.checkPath}?path=${encodeURIComponent(rootFolderInput.value)}`)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+      return response.json();
     })
-    .then(data => {
-        validRootFolderHelpText.textContent = `Found ${data.file_count} files to annotate`;
-        validRootFolderHelpText.classList.remove('is-hidden');
-        invalidRootFolderHelpText.classList.add('is-hidden');
-        submitButton.disabled = false;
+    .then((data) => {
+      validRootFolderHelpText.textContent = `Found ${data.file_count} files to annotate`;
+      validRootFolderHelpText.classList.remove('is-hidden');
+      invalidRootFolderHelpText.classList.add('is-hidden');
+      submitButton.disabled = false;
     })
-    .catch(error => {
-        invalidRootFolderHelpText.textContent = error.message;
-        invalidRootFolderHelpText.classList.remove('is-hidden');
-        validRootFolderHelpText.classList.add('is-hidden');
-        submitButton.disabled = true;
+    .catch((error) => {
+      invalidRootFolderHelpText.textContent = error.message;
+      invalidRootFolderHelpText.classList.remove('is-hidden');
+      validRootFolderHelpText.classList.add('is-hidden');
+      submitButton.disabled = true;
     });
 }
 
 // document.getelementbyid('task-creation-form').queryselectorall('input.label-input').foreach(inputelement => {
 function handleLabelInputFormValidation(event) {
-    const inputElement = event.target; // calling code MUST PASS EXACT EVENT MATCH
-    const submitButton = document.getElementById('task-creation-submit-button');
-    const labelAlphanumericSpaceHyphenValidation = new FormValidationControl(
-        inputElement,
-        onlyAlphanumericSpacesHyphens,
-        'Only alphanumeric characters, spaces, and hyphens allowed.'
-    );
+  const inputElement = event.target; // calling code MUST PASS EXACT EVENT MATCH
+  const submitButton = document.getElementById('task-creation-submit-button');
+  const labelAlphanumericSpaceHyphenValidation = new FormValidationControl(
+    inputElement,
+    onlyAlphanumericSpacesHyphens,
+    'Only alphanumeric characters, spaces, and hyphens allowed.'
+  );
 
-    const labelLessThan20CharsValidation = new FormValidationControl(
-        inputElement,
-        (value) => value.length <= 20
-    );
+  const labelLessThan20CharsValidation = new FormValidationControl(
+    inputElement,
+    (value) => value.length <= 20
+  );
 
-    const allLabelFields = [
-        ...inputElement.closest('fieldset').querySelectorAll('input.label-input')
-    ].map(input => input.value);
+  const allLabelFields = [
+    ...inputElement.closest('fieldset').querySelectorAll('input.label-input'),
+  ].map((input) => input.value);
 
-    const labelsUniqueValidation = new FormValidationControl(
-        inputElement,
-        partial(allItemsUnique, allLabelFields),
-        'Labels are case and space insensitive and must be unique.'
-    );
+  const labelsUniqueValidation = new FormValidationControl(
+    inputElement,
+    partial(allItemsUnique, allLabelFields),
+    'Labels are case and space insensitive and must be unique.'
+  );
 
-    const labelValidationManager = new FormValidationManager(
-        bulmaRemoveDanger,
-        bulmaSetDanger,
-        inputElement.closest('fieldset').querySelector('p.help'),
-        submitButton,
-        labelAlphanumericSpaceHyphenValidation,
-        labelLessThan20CharsValidation,
-        labelsUniqueValidation
-    );
+  const labelValidationManager = new FormValidationManager(
+    bulmaRemoveDanger,
+    bulmaSetDanger,
+    inputElement.closest('fieldset').querySelector('p.help'),
+    submitButton,
+    labelAlphanumericSpaceHyphenValidation,
+    labelLessThan20CharsValidation,
+    labelsUniqueValidation
+  );
 
-    labelValidationManager.applyValidation();
+  labelValidationManager.applyValidation();
 }
 
 // capture keypress event for keybind inputs and insert that key into the input field
 // document.getelementbyid('task-creation-form').queryselectorall('input.keybind-input').foreach(inputelement => {
 function handleKeybindInputFormValidation(event) {
-    event.preventDefault();
+  event.preventDefault();
 
-    const inputElement = event.target;
-    inputElement.value = event.key;
-    const helpTextElement = inputElement.closest('fieldset').querySelector('p.help');
-    const submitButton = document.getElementById('task-creation-submit-button');
+  const inputElement = event.target;
+  inputElement.value = event.key;
+  const helpTextElement = inputElement.closest('fieldset').querySelector('p.help');
+  const submitButton = document.getElementById('task-creation-submit-button');
 
-    const otherKeybinds = [
-        ...inputElement.closest('fieldset').querySelectorAll('input.keybind-input')
-    ].map(input => input.value);
+  const otherKeybinds = [
+    ...inputElement.closest('fieldset').querySelectorAll('input.keybind-input'),
+  ].map((input) => input.value);
 
-    const keybindsUniqueValidation = new FormValidationControl(
-        inputElement,
-        partial(allItemsUnique, otherKeybinds),
-        'Keybinds are case-insensitive and must be unique.'
-    );
+  const keybindsUniqueValidation = new FormValidationControl(
+    inputElement,
+    partial(allItemsUnique, otherKeybinds),
+    'Keybinds are case-insensitive and must be unique.'
+  );
 
-    const notUndoKeyValidation = new FormValidationControl(
-        inputElement,
-        notUndoKey,
-        '"Z" and "z" are reserved for undo. Please choose another key.'
-    );
+  const notUndoKeyValidation = new FormValidationControl(
+    inputElement,
+    notUndoKey,
+    '"Z" and "z" are reserved for undo. Please choose another key.'
+  );
 
-    const labelValidationManager = new FormValidationManager(
-        bulmaRemoveDanger,
-        bulmaSetDanger,
-        helpTextElement,
-        submitButton,
-        keybindsUniqueValidation,
-        notUndoKeyValidation
-    );
+  const labelValidationManager = new FormValidationManager(
+    bulmaRemoveDanger,
+    bulmaSetDanger,
+    helpTextElement,
+    submitButton,
+    keybindsUniqueValidation,
+    notUndoKeyValidation
+  );
 
-    labelValidationManager.applyValidation();
+  labelValidationManager.applyValidation();
 
-    if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
-        console.log('Modifier key detected');
-        inputElement.classList.add('is-danger');
-        helpTextElement.textContent = 'Keybind must not include modifier keys (Shift, Ctrl, Alt, or Meta).';
-    }
+  if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
+    console.log('Modifier key detected');
+    inputElement.classList.add('is-danger');
+    helpTextElement.textContent =
+      'Keybind must not include modifier keys (Shift, Ctrl, Alt, or Meta).';
+  }
 }
 
 // document.getelementbyid('task-creation-form').addeventlistener('submit', function(event) {
 function handleTaskCreationFormSubmit(event) {
-    event.preventDefault();
-    let formData = new FormData(event.target);
-    const formElement = event.target;
-    let taskData = generateRequestFromTaskCreationForm(formData);
-    fetch(routes.createTask, {
-        method: 'POST',
-        body: JSON.stringify(taskData),
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(response.statusText);
-        }
-        return response.json();
+  event.preventDefault();
+  let formData = new FormData(event.target);
+  const formElement = event.target;
+  let taskData = generateRequestFromTaskCreationForm(formData);
+  fetch(routes.createTask, {
+    method: 'POST',
+    body: JSON.stringify(taskData),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+      return response.json();
     })
     .then(() => {
-        window.location.reload();
+      window.location.reload();
     })
-    .catch(error => {
-        console.error(error);
-        formElement.reset();
-        alert('An error occurred while creating the task.');
+    .catch((error) => {
+      console.error(error);
+      formElement.reset();
+      alert('An error occurred while creating the task.');
     });
 }
 
 function handleTaskAssignmentFormSubmit(event) {
-    event.preventDefault();
-    let formData = new FormData(event.target); // switching this line with line below causes error
-    const formElement = event.target;          // not sure why, something to do with FormData expire
-    let taskData = generateRequestFromTaskAssignmentForm(formData);
-    fetch(routes.assignTask, {
-        method: 'POST',
-        body: JSON.stringify(taskData),
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(response.statusText);
-        }
-        return response.json();
+  event.preventDefault();
+  let formData = new FormData(event.target); // switching this line with line below causes error
+  const formElement = event.target; // not sure why, something to do with FormData expire
+  let taskData = generateRequestFromTaskAssignmentForm(formData);
+  fetch(routes.assignTask, {
+    method: 'POST',
+    body: JSON.stringify(taskData),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+      return response.json();
     })
     .then(() => {
-        window.location.reload();
+      window.location.reload();
     })
-    .catch(error => {
-        console.error(error);
-        formElement.reset();
-        alert('An error occurred while creating the task.');
+    .catch((error) => {
+      console.error(error);
+      formElement.reset();
+      alert('An error occurred while creating the task.');
     });
 }
 
+function handleTaskUpdateFormSubmit(event) {
+  event.preventDefault();
+  let formData = new FormData(event.target);
+  const formElement = event.target;
+  let taskData = generateRequestFromTaskCreationForm(formData);
+  fetch(routes.updateTask, {
+    method: 'POST',
+    body: JSON.stringify(taskData),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+      return response.json();
+    })
+    .then(() => {
+      window.location.reload();
+    })
+    .catch((error) => {
+      console.error(error);
+      formElement.reset();
+      alert('An error occurred while creating the task.');
+    });
+}
 
 // ALWAYS ORDER MORE SPECIFIC SELECTORS FIRST
 const HANDLER_MAP = {
-    'click': [ 
-        // Modal
-        ['.js-modal-trigger', handleTaskCreateModalOpen], // stop propagation tab is within modal
-        ['.task-manage-tab', handleTaskManageModalTabSwitch],
-        ['#add-label-button', handleAddLabelButtonClick],
-        ['.cancel-close', handleModalCloseByCancel],
-        ['dialog', handleModalClose],
-        ['.js-modal-trigger.edit-keybind-button', handleTaskEditModalOpen],
-        // Panel Main Page
-        ['.task-display-card .media-content', handleTaskCardMouseEvents],
-        ['.delete-task-button', handleTaskDeleteButtonClick],
-    ],
-    'keydown': [
-        ['.keybind-input', handleKeybindInputFormValidation],
-    ],
-    'input': [
-        // these selectors are for the EXACT INPUT ELEMENT cannot be for containing box
-        ['#root-folder-input', handleRootFolderFormValidation],
-        ['.label-input', handleLabelInputFormValidation],
-    ],
-    'submit': [
-        ['#task-creation-form', handleTaskCreationFormSubmit],
-        ['#task-assign-form', handleTaskAssignmentFormSubmit],
-    ]
-}
+  click: [
+    // Modal
+    ['.js-modal-trigger', handleTaskCreateModalOpen], // stop propagation tab is within modal
+    ['.task-manage-tab', handleTaskManageModalTabSwitch],
+    ['.add-label-button', handleAddLabelButtonClick],
+    ['.cancel-close', handleModalCloseByCancel],
+    ['dialog', handleModalClose],
+    // ['.js-modal-trigger.edit-keybind-button', handleTaskEditModalOpen],
+    // Panel Main Page
+    ['.task-display-card .media-content', handleTaskCardMouseEvents],
+    ['.delete-task-button', handleTaskDeleteButtonClick],
+  ],
+  keydown: [['.keybind-input', handleKeybindInputFormValidation]],
+  input: [
+    // these selectors are for the EXACT INPUT ELEMENT cannot be for containing box
+    ['#root-folder-input', handleRootFolderFormValidation],
+    ['.label-input', handleLabelInputFormValidation],
+  ],
+  submit: [
+    ['#task-creation-form', handleTaskCreationFormSubmit],
+    ['#task-assign-form', handleTaskAssignmentFormSubmit],
+    ['#task-edit-form', handleTaskUpdateFormSubmit],
+  ],
+};
 
 // Handle all events via event delegation
 // This pattern only allows each click action to trigger one action
@@ -453,11 +508,11 @@ const HANDLER_MAP = {
 // other handlers or not.
 
 document.addEventListener('DOMContentLoaded', () => {
-    for (const [eventType, handlers] of Object.entries(HANDLER_MAP)) {
-        for (const [selector, handler] of handlers) {
-            document.querySelectorAll(selector).forEach(element => {
-                element.addEventListener(eventType, handler);
-            });
-        }
+  for (const [eventType, handlers] of Object.entries(HANDLER_MAP)) {
+    for (const [selector, handler] of handlers) {
+      document.querySelectorAll(selector).forEach((element) => {
+        element.addEventListener(eventType, handler);
+      });
     }
+  }
 });

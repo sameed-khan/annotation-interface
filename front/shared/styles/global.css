@@ -1,0 +1,8 @@
+@import "./bulma.css";
+@import "./bulma-checkbox.css";
+@import "./fontawesome-6-all.css";
+
+html,
+body {
+  height: 100%;
+}

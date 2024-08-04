@@ -6,16 +6,17 @@
 // X_Y_Z     | either getXYZ or xYZ
 
 export const routes = {
-    getIndexPage: '/',
-    getLoginPage: '/login',
-    getTaskPanelPage: '/panel',    
+  getIndexPage: "/",
+  getLoginPage: "/login",
+  getTaskPanelPage: "/panel",
 
-    checkPath: '/api/system/check_path',
+  checkPath: "/api/system/check_path",
 
-    checkUsername: '/api/users/check_username',
-    loginUser: '/api/users/login',
+  checkUsername: "/api/users/check_username",
+  loginUser: "/api/users/login",
 
-    createTask: '/api/tasks/create',
-    assignTask: '/api/tasks/assign',
-    unassignTask: '/api/tasks/unassign',
-}
+  createTask: "/api/tasks/create",
+  assignTask: "/api/tasks/assign",
+  unassignTask: "/api/tasks/unassign",
+  updateTask: "/api/tasks/update",
+};

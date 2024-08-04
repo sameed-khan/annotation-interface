@@ -1,0 +1,21 @@
+@import '@/shared/styles/bulma.css';
+@import '@/shared/styles/bulma-checkbox.css';
+@import '@/shared/styles/fontawesome-6-all.css';
+
+html,
+body {
+  height: 100%;
+}
+
+.empty-space-header {
+  height: 7rem;
+}
+
+figure {
+  height: auto;
+  width: 100%;
+}
+img {
+  height: auto;
+  width: auto;
+}

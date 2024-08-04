@@ -1,120 +1,130 @@
 export class FormValidationManager {
-    constructor(uiValidUpdateFunc, uiInvalidUpdateFunc, helpTextElement, submitButton, ...formValidationControls) {
+  constructor(
+    uiValidUpdateFunc,
+    uiInvalidUpdateFunc,
+    helpTextElement,
+    submitButton,
+    ...formValidationControls
+  ) {
     /**
      * @param {Function} uiValidUpdateFunc The function to call when the form is valid
      * @param {Function} uiInvalidUpdateFunc The function to call when the form is invalid
      * @param {HTMLElement} helpTextElement The element to display the help text
      * @param {HTMlElement} submitButton The submit button for the form
      * @param {Array[FormValidationControl]} formValidationControls An array of FormValidationControl objects
-    */
-        this._uiValidUpdateFunc = uiValidUpdateFunc;
-        this._uiInvalidUpdateFunc = uiInvalidUpdateFunc;
-        this._helpTextElement = helpTextElement;
-        this._submitButton = submitButton;
-        this._formValidationControls = formValidationControls;
+     */
+    this._uiValidUpdateFunc = uiValidUpdateFunc;
+    this._uiInvalidUpdateFunc = uiInvalidUpdateFunc;
+    this._helpTextElement = helpTextElement;
+    this._submitButton = submitButton;
+    this._formValidationControls = formValidationControls;
 
-        this._helperTextString = '';
-        this._formElement = this._formValidationControls[0].formElement; // All form elements should be the same element
+    this._helperTextString = "";
+    this._formElement = this._formValidationControls[0].formElement; // All form elements should be the same element
+  }
+
+  uiUpdateInvalid() {
+    this._uiInvalidUpdateFunc(this._formElement);
+    this._submitButton.disabled = true;
+  }
+
+  uiUpdateValid() {
+    this._uiValidUpdateFunc(this._formElement);
+    this._submitButton.disabled = false;
+  }
+
+  applyValidation() {
+    let allValid = this._formValidationControls.every((control) =>
+      control.validate(),
+    );
+    if (allValid) {
+      this.uiUpdateValid();
+      this._helpTextElement.textContent = "";
+      return;
     }
 
-    uiUpdateInvalid() {
-        this._uiInvalidUpdateFunc(this._formElement);
-        this._submitButton.disabled = true;
-    }
+    this.uiUpdateInvalid();
 
-    uiUpdateValid() {
-        this._uiValidUpdateFunc(this._formElement);
-        this._submitButton.disabled = false;
-    }
-
-    applyValidation() {
-        let allValid = this._formValidationControls.every(control => control.validate());
-        if (allValid) {
-            this.uiUpdateValid();
-            this._helpTextElement.textContent = '';
-            return;
-        }
-
-        this.uiUpdateInvalid();
-
-        // Construct the helper text string
-        this._formValidationControls.forEach(control => {
-            if (!control.validate()) {
-                this._helperTextString += control._helperText + ' ';
-            }
-        })
-        this._helpTextElement.textContent = this._helperTextString;
-    }
+    // Construct the helper text string
+    this._formValidationControls.forEach((control) => {
+      if (!control.validate()) {
+        this._helperTextString += control._helperText + " ";
+      }
+    });
+    this._helpTextElement.textContent = this._helperTextString;
+  }
 }
 export class FormValidationControl {
-    constructor(formElement, formValidator, helperText) {
-        /**
-         * @param {HTMLElement | Array[HTMLElement]} formElement The form element(s) to validate
-         * @param {Function} formValidator The function to validate the form. Only accepts one string argument. Only returns a boolean.
-         * @param {string} helperText The text to display when validation fails. Should be no more than 5 words and declarative ( e.g. "Only alphanumeric characters allowed.")
-         */
+  constructor(formElement, formValidator, helperText) {
+    /**
+     * @param {HTMLElement | Array[HTMLElement]} formElement The form element(s) to validate
+     * @param {Function} formValidator The function to validate the form. Only accepts one string argument. Only returns a boolean.
+     * @param {string} helperText The text to display when validation fails. Should be no more than 5 words and declarative ( e.g. "Only alphanumeric characters allowed.")
+     */
 
-        this.formElement = formElement;
-        this._formValidator = formValidator;
-        this._helperText = helperText;
-    }
+    this.formElement = formElement;
+    this._formValidator = formValidator;
+    this._helperText = helperText;
+  }
 
-    validate() {
-        let formValue = this.formElement.value;
-        let isValid = this._formValidator(formValue);
-        return isValid;
-    }
+  validate() {
+    let formValue = this.formElement.value;
+    let isValid = this._formValidator(formValue);
+    return isValid;
+  }
 }
 
 export function onlyAlphanumericSpacesHyphens(value) {
-    return /^[a-zA-Z0-9\s-]*$/.test(value);
+  return /^[a-zA-Z0-9\s-]*$/.test(value);
 }
 
 export function onlyAlphaNumeric(value) {
-    return /^[a-zA-Z0-9]*$/.test(value);
+  return /^[a-zA-Z0-9]*$/.test(value);
 }
 
 export function notUndoKey(value) {
-    return value.toLowerCase() !== 'z';
+  return value.toLowerCase() !== "z";
 }
 
 export function onlySingleCharacter(value) {
-    return value.length === 1;
+  return value.length === 1;
 }
 
 /**
- * 
- * @param {Array[HTMLElement]} otherValues 
- * @param {HTMLElement} checkValue 
+ *
+ * @param {Array[HTMLElement]} otherValues
+ * @param {HTMLElement} checkValue
  * @returns boolean
  */
-export function allItemsUnique(checkValues, _){
-    // TODO: Refactor this entire class to be more generic and not enforce function signature
-    if ((checkValues.length === 0) || (checkValues.every(v => v === ''))) { return true; }
+export function allItemsUnique(checkValues, _) {
+  // TODO: Refactor this entire class to be more generic and not enforce function signature
+  if (checkValues.length === 0 || checkValues.every((v) => v === "")) {
+    return true;
+  }
 
-    const b = checkValues.map(v => v.toLowerCase().trim().replace(/\s/g, ''));
-    const processedValues = new Set(b); 
-    return processedValues.size === b.length;
+  const b = checkValues.map((v) => v.toLowerCase().trim().replace(/\s/g, ""));
+  const processedValues = new Set(b);
+  return processedValues.size === b.length;
 }
 
 // UI Update Functions
 export function bulmaSetDanger(value) {
-    value.classList.add('is-danger');
+  value.classList.add("is-danger");
 }
 
 export function bulmaRemoveDanger(value) {
-    value.classList.remove('is-danger');
+  value.classList.remove("is-danger");
 }
 
 export function partial(func, ...args) {
-    return function() {
-        return func(...args, ...arguments);
-    }
+  return function () {
+    return func(...args, ...arguments);
+  };
 }
 
 // Escape odd numbered sequences of backslashes to handle Windows path
 const RE_ODD_BACKSLASH_SEQUENCE = /(?<!\\)(\\{1}(?:\\{2})*)(?!\\)/g;
 
 export function escapeBackslashes(str) {
-    return str.replace(RE_ODD_BACKSLASH_SEQUENCE, '$1\\');
+  return str.replace(RE_ODD_BACKSLASH_SEQUENCE, "$1\\");
 }

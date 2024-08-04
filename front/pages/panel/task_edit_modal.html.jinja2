@@ -1,0 +1,48 @@
+<dialog id="task-edit-modal-{{ loop.index0 }}" class="nonbulma-modal">
+  <form id="task-edit-form">
+    <!-- will be submitted via fetch request so attributes not specified-->
+    <div class="columns">
+      <div class="column is-half">
+        <fieldset name="label-keybind-input-form-group" class="task-creation-lk-fieldset column">
+          <label class="label">Edit Labels and Keybinds</label>
+
+          {% for label_keybind_set in task_label_keybinds %}
+            <!-- single quotes needed below since json string has double quotes -->
+            <!-- prettier-ignore -->
+            <label-keybind-input lkFields='{{ label_keybind_set | tojson }}'></label-keybind-input>
+          {% endfor %}
+
+          <p class="help is-info dynamic-insert-end-boundary">&nbsp;</p>
+          <div id="task-edit-add-label-button-container" class="control">
+            <button class="add-label-button button is-light is-small" type="button">
+              <span class="icon">
+                <i class="fas fa-plus"></i>
+              </span>
+              <span>Add Label</span>
+            </button>
+          </div>
+        </fieldset>
+      </div>
+      <div class="column is-half">
+        <label class="label">Select Images to Include</label>
+        <div class="field">
+          <div class="control task-file-select-control">
+            <label class="b-checkbox checkbox task-file-select">
+              <input type="checkbox" checked />
+              <span class="check is-info"></span>
+              <span class="control-label">{{ filename }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="field is-grouped">
+      <div class="control">
+        <button class="button is-link" type="submit">Submit Changes</button>
+      </div>
+      <div class="control">
+        <button class="button is-link is-ghost cancel-close" type="reset">Cancel</button>
+      </div>
+    </div>
+  </form>
+</dialog>

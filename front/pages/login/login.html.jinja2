@@ -1,109 +1,157 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- <link rel="stylesheet" href="../styles.css">
-    <script defer src="../scripts/login.js"></script>
-    <title>Login Page</title> -->
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <link rel="stylesheet" href="static/styles.css">
-    <link rel="icon" type="image/jpg" href="static/assets/favicon.jpeg">
-    <script type="module" defer src="static/scripts/login.js"></script>
+    <link rel="stylesheet" href="login.css" />
+    <link rel="icon" type="image/jpg" href="@/assets/images/favicon.jpeg" />
+    <script type="module" defer src="login.js"></script>
+
     <title>Login Page</title>
-
-</head>
-<body>
-
+  </head>
+  <body>
     <div class="columns is-multiline is-centered">
-        <div class="column is-full empty-space-header"></div>
-        <div class="column is-half">
-            <figure class="image">
-                <img src="static/assets/hf-full-logo.svg" alt="HF Logo">
-            </figure>
-            <p class="title has-text-centered is-size-1">Annotations Tool</p>
-        </div>
+      <div class="column is-full empty-space-header"></div>
+      <div class="column is-half">
+        <figure class="image">
+          <img src="@/assets/hf-full-logo.svg" alt="HF Logo" />
+        </figure>
+        <p class="title has-text-centered is-size-1">Annotations Tool</p>
+      </div>
     </div>
 
     <div class="columns is-centered mt-5">
-        <div class="column is-4">
-            <form id="login-form" method="post" action="{{ login_user_route }}">
-                <div class="field">
-                    <div class="control has-icons-left">
-                        <input name="request_username" class="input" type="text" placeholder="Username" required>
-                        <span class="icon is-small is-left">
-                        <i class="fas fa-user"></i>
-                        </span>
-                    </div>
-                    <div class="control has-icons-left">
-                        <input name="request_password" class="input" type="text" placeholder="Password" required>
-                        <span class="icon is-small is-left">
-                        <i class="fas fa-lock"></i>
-                        </span>
-                    </div>
-                    <div class="control is-flex mt-2">
-                        <button class="button is-link mr-1">Login</button>
-                        <button type="button" class="button is-light js-modal-trigger" data-target="new-account-modal">New account?</button>
-                    </div>
-                </div>
-            </form>
-        </div>
+      <div class="column is-4">
+        <form id="login-form" method="post" action="{{ login_user_route }}">
+          <div class="field">
+            <div class="control has-icons-left">
+              <input
+                name="request_username"
+                class="input"
+                type="text"
+                placeholder="Username"
+                required
+              />
+              <span class="icon is-small is-left">
+                <i class="fas fa-user"></i>
+              </span>
+            </div>
+
+            <div class="control has-icons-left">
+              <input
+                name="request_password"
+                class="input"
+                type="text"
+                placeholder="Password"
+                required
+              />
+              <span class="icon is-small is-left">
+                <i class="fas fa-lock"></i>
+              </span>
+            </div>
+
+            <div class="control is-flex mt-2">
+              <button class="button is-link mr-1">Login</button>
+              <button
+                type="button"
+                class="button is-light js-modal-trigger"
+                data-target="new-account-modal"
+              >
+                New account?
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
 
     <div id="login-failed-notification" class="columns is-centered mt-5 is-hidden">
-        <div class="column is-4">
-            <div class="notification is-4 has-text-white-ter has-text-centered is-danger"><strong>Error: incorrect username or password</strong></div>
+      <div class="column is-4">
+        <div class="notification is-4 has-text-white-ter has-text-centered is-danger">
+          <strong>Error: incorrect username or password</strong>
         </div>
+      </div>
     </div>
 
     <!-- Modal, not viewed on the page -->
     <div id="new-account-modal" class="modal">
-        <div class="modal-background"></div>
+      <div class="modal-background"></div>
 
-        <div class="modal-content">
-            <div class="box">
-                <form action="{{ register_user_route }}" method="post">
-                    <div class="field">
-                    <label class="label">Username</label>
-                    <div class="control has-icons-left has-icons-right">
-                        <input id="username-input" name="request_username" class="input" type="text" placeholder="Username" required>
-                        <span class="icon is-small is-left">
-                        <i class="fas fa-user"></i>
-                        </span>
-                    </div>
-                    <p id="register-form-available-helptext" class="help is-success is-hidden">This username is available</p>
-                    <p id="register-form-unavailable-helptext" class="help is-danger is-hidden">This username is already taken</p>
-                    </div>
+      <div class="modal-content">
+        <div class="box">
+          <form action="{{ register_user_route }}" method="post">
+            <div class="field">
+              <label class="label">Username</label>
+              <div class="control has-icons-left has-icons-right">
+                <input
+                  id="username-input"
+                  name="request_username"
+                  class="input"
+                  type="text"
+                  placeholder="Username"
+                  required
+                />
+                <span class="icon is-small is-left">
+                  <i class="fas fa-user"></i>
+                </span>
+              </div>
+              <p id="register-form-available-helptext" class="help is-success is-hidden">
+                This username is available
+              </p>
+              <p id="register-form-unavailable-helptext" class="help is-danger is-hidden">
+                This username is already taken
+              </p>
+            </div>
 
-                    <div class="field">
-                    <label class="label">Password</label>
-                    <div class="control has-icons-left has-icons-right">
-                        <input id="password-input" name="request_password" class="input" type="text" placeholder="Password" required>
-                        <span class="icon is-small is-left">
-                        <i class="fas fa-lock"></i>
-                        </span>
-                    </div>
+            <div class="field">
+              <label class="label">Password</label>
+              <div class="control has-icons-left has-icons-right">
+                <input
+                  id="password-input"
+                  name="request_password"
+                  class="input"
+                  type="text"
+                  placeholder="Password"
+                  required
+                />
+                <span class="icon is-small is-left">
+                  <i class="fas fa-lock"></i>
+                </span>
+              </div>
+              <label class="label mt-2">Verify Password</label>
+              <div class="control has-icons-left has-icons-right">
+                <input
+                  id="verify-password-input"
+                  name="verify_password"
+                  class="input"
+                  type="text"
+                  placeholder="Verify password"
+                  required
+                />
+                <span class="icon is-small is-left">
+                  <i class="fas fa-check"></i>
+                </span>
+              </div>
+              <p id="register-form-nomatch-helptext" class="help is-danger is-hidden">
+                The passwords do not match
+              </p>
+            </div>
 
-                    <label class="label mt-2">Verify Password</label>
-                    <div class="control has-icons-left has-icons-right">
-                        <input id="verify-password-input" name="verify_password" class="input" type="text" placeholder="Verify password" required>
-                        <span class="icon is-small is-left">
-                        <i class="fas fa-check"></i>
-                        </span>
-                    </div>
-                    <p id="register-form-nomatch-helptext" class="help is-danger is-hidden">The passwords do not match</p>
-                    </div>
-
-                    <div class="field is-grouped">
-                    <div class="control">
-                        <button id="new-user-submit-button" type="submit" class="button is-link">Submit</button>
-                    </div>
-                    <div class="control">
-                        <button type="reset" class="button is-link is-light cancel-close">Cancel</button>
-                    </div>
-                </form> 
+            <div class="field is-grouped">
+              <div class="control">
+                <button id="new-user-submit-button" type="submit" class="button is-link">
+                  Submit
+                </button>
+              </div>
+              <div class="control">
+                <button type="reset" class="button is-link is-light cancel-close">Cancel</button>
+              </div>
+            </div>
+          </form>
+        </div>
         <button type="button" class="modal-close is-large" aria-label="close"></button>
+      </div>
     </div>
-
-</body>
+  </body>
 </html>

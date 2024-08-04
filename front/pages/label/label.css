@@ -1,0 +1,60 @@
+/* LABEL */
+.label-page-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.label-page-main {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+#osd-viewer {
+  flex: 0 0 60vh;
+}
+
+.columns {
+  flex: 0 0 auto;
+}
+
+.notification-area {
+  flex: 1 0 auto;
+  min-height: 1rem;
+}
+
+.keybind-label {
+  position: absolute;
+  top: 5px;
+  left: 15px;
+  font-weight: bold;
+  color: #ba209e;
+}
+
+.label-btn {
+  height: 100%;
+  word-wrap: break-word;
+  white-space: normal;
+  hyphens: auto;
+  position: relative;
+  transition: 0.2s filter ease;
+  cursor: pointer;
+}
+
+.label-btn:hover {
+  filter: brightness(90%);
+}
+
+.label-button-pressed {
+  filter: brightness(90%);
+}
+
+.info-and-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-shrink: 0;
+  padding: 1rem 0.5rem;
+  background-color: #f5f5f5;
+}
