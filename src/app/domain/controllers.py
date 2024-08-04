@@ -51,10 +51,11 @@ class PageController(Controller):
         exclude_from_auth=True,
         status_code=HTTP_200_OK,
     )
+    # TEMP: modify based on env
     async def login_page(self) -> Template:
         """Serve login page"""
         return Template(
-            template_name="login.html.jinja2",
+            template_name="login/login.html.jinja2",
             context={"login_user_route": urls.LOGIN_USER, "register_user_route": urls.CREATE_USER},
         )
 
@@ -76,10 +77,10 @@ class PageController(Controller):
         user_id = user.id
         # user_id = request.session.get("user_id")
         # user = await users_service.get(user_id)  # exception here means that authentication failed
-        user_tasks = user.assigned_tasks
+        user_tasks: list[Task] = user.assigned_tasks
 
         # Populate assigned tasks list
-        task_info_as_dicts = []
+        task_info_as_dicts: list[dict[str, Any]] = []
         for task in user_tasks:
             task_annotations = task.annotations
             creator_name = task.creator.username if task.creator is not None else "Unknown"
@@ -95,16 +96,21 @@ class PageController(Controller):
             )
 
         # Populate user's label keybinds for each assigned task
-        label_keybinds_by_task = []
+        label_keybinds_by_task: list[list[dict[str, str]]] = []
         for task in user_tasks:
-            label_keybinds = task.label_keybinds
+            label_keybinds: list[LabelKeybind] = task.label_keybinds
             label_keybinds_by_task.append(
-                [lk.to_dict() for lk in label_keybinds if lk.user_id == user_id]
+                [
+                    {"label": lk.label, "keybind": lk.keybind}
+                    for lk in label_keybinds
+                    if lk.user_id == user_id
+                ]
             )
 
         # Populate global tasks list
         all_tasks: Sequence[Task] = await tasks_service.get_all_tasks()
-        avail_tasks = [t for t in all_tasks if t not in user.assigned_tasks]
+        user_assigned_task_ids = [t.id for t in user.assigned_tasks]
+        avail_tasks = [t for t in all_tasks if t.id not in user_assigned_task_ids]
         global_task_info_as_dicts: list[dict[str, str | int]] = []
         for task in avail_tasks:
             creator_name = task.creator.username if task.creator is not None else "Unknown"

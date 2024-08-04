@@ -7,7 +7,7 @@
 
 
 # MISC
-STATIC_FILE_ENDPOINT = "/static"
+ASSETS_ENDPOINT = "/static"
 SCHEMA_ENDPOINT = "/schema"
 
 # SYSTEM INFORMATION
@@ -28,3 +28,4 @@ CHECK_USERNAME = "/api/users/check_username"
 CREATE_TASK = "/api/tasks/create"
 ASSIGN_TASK = "/api/tasks/assign"
 UNASSIGN_TASK = "/api/tasks/unassign"
+UPDATE_TASK = "/api/tasks/update"
