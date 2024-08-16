@@ -1,3 +1,4 @@
+import posixpath
 from os import urandom
 from typing import Any, Dict
 
@@ -21,7 +22,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.domain import urls
-from app.domain.controllers import PageController, SystemController, TaskController, UserController
+from app.domain.controllers import (
+    AnnotationController,
+    PageController,
+    SystemController,
+    TaskController,
+    UserController,
+)
 from app.domain.schema import User
 from app.domain.template_filters import (
     format_and_localize_timestamp,
@@ -68,7 +75,14 @@ session_auth = SessionAuth[User, ClientSideSessionBackend](
     ],
 )
 
-jinja_env = Environment(loader=FileSystemLoader("dist/pages"))  # NOTE: cannot prefix "/"
+
+# Enable loading templates relative to the parent template
+class RelEnvironment(Environment):
+    def join_path(self, template: str, parent: str) -> str:
+        return posixpath.join(posixpath.dirname(parent), template)
+
+
+jinja_env = RelEnvironment(loader=FileSystemLoader("dist/pages"))  # NOTE: cannot prefix "/"
 jinja_env.filters.update(
     {
         "reduce_slashes": reduce_slashes,
@@ -97,6 +111,7 @@ app = Litestar(
         UserController,
         SystemController,
         TaskController,
+        AnnotationController,
         webpack_bundle_router,
     ],
     template_config=TemplateConfig(instance=JinjaTemplateEngine.from_environment(jinja_env)),

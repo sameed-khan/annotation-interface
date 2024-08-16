@@ -105,3 +105,8 @@ class TaskData(BaseModel):
             raise ValueError("Number of labels and keybinds do not match.")
 
         return self
+
+
+# ANNOTATION
+class AnnotationUpdateData(BaseModel):
+    label: str = Field(..., max_length=20, description="New label assigned to annotation")

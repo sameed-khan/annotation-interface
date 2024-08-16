@@ -1,7 +1,8 @@
 import {defineConfig} from 'vite';
 import {resolve} from 'path';
 import viteHtmlResolveAliasPlugin from 'vite-plugin-html-resolve-alias';
-import customJinjaPlugin from './build/vite-plugin-custom-jinja';
+import customJinjaPlugin from './vite_build/vite-plugin-custom-jinja';
+import {visualizer} from 'rollup-plugin-visualizer';
 
 const ASSET_URL = process.env.ASSET_URL || '/';
 const VITE_PORT = process.env.VITE_PORT || 5173;
@@ -43,8 +44,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'front'),
+      '@': resolve(__dirname, 'front/'),
     },
   },
-  plugins: [viteHtmlResolveAliasPlugin(), customJinjaPlugin()],
+  plugins: [viteHtmlResolveAliasPlugin(), customJinjaPlugin(), visualizer()],
 });

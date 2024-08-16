@@ -51,7 +51,7 @@
                             <p class="is-size-7">
                               <span>Root Folder:</span>
                               <span class="is-family-monospace"
-                                >{{ task.root_folder | reduce_slashes }}</span
+                                >{{ task.root_folder | reduce_slashes | truncate_string(20) | e }}</span
                               >
                             </p>
                           </div>
@@ -136,6 +136,7 @@
       type="button"
       class="is-fab js-modal-trigger button is-primary is-large"
       data-target="task-creation-modal"
+      style="position: absolute;"
     >
       <span class="icon">
         <i class="fas fa-plus"></i>
@@ -282,7 +283,7 @@
               <label class="label is-size-4">Assign to Existing Task</label>
               <div class="task-import-modal-background">
                 {% for task in global_task_list %}
-                  <div class="import-task-select-container control block columns is-clickable">
+                  <div class="import-task-select-container columns mb-4 is-clickable">
                     <input
                       type="checkbox"
                       id="task-checkbox-{{ task.id }}"
@@ -366,7 +367,10 @@
                       <circle class="progress-ring pr-path"></circle>
                     </svg>
                     #}
-                      {% include "radial_progress_bar.html.jinja2" %}
+                      {% with %}
+                        {% set loop_index = loop.index0 %}
+                        {% include "radial_progress_bar.html.jinja2" %}
+                      {% endwith %}
                     </div>
                   </div>
                 {% endfor %}

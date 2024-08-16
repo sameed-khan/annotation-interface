@@ -16,7 +16,7 @@ CHECK_PATH = "/api/system/check_path"
 # PAGE URLS
 LOGIN_PAGE = "/login"
 TASK_PANEL_PAGE = "/panel"
-ANNOTATE_PAGE = "/label"
+LABEL_PAGE = "/label"
 
 # USER
 LOGIN_USER = "/api/users/login"
@@ -29,3 +29,8 @@ CREATE_TASK = "/api/tasks/create"
 ASSIGN_TASK = "/api/tasks/assign"
 UNASSIGN_TASK = "/api/tasks/unassign"
 UPDATE_TASK = "/api/tasks/update"
+
+# ANNOTATION
+UPDATE_ANNOTATION = "/api/annotations/update_annotation"
+GET_NEXT_ANNOTATION = "/api/annotations/get_next_annotation"
+GET_ANY_ANNOTATION = "/api/annotations/get_annotation"

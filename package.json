@@ -9,6 +9,7 @@
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.6.0",
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
+    "@panzoom/panzoom": "^4.5.1",
     "lit": "^3.1.4"
   },
   "devDependencies": {
@@ -21,6 +22,7 @@
     "jsdom": "^24.1.1",
     "prettier": "^3.3.3",
     "prettier-plugin-jinja-template": "^1.4.1",
+    "rollup-plugin-visualizer": "^5.12.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.16.5",
     "typescript": "^5.5.4",

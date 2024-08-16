@@ -8,12 +8,16 @@
 .no-task-notification {
   padding: 10rem;
 }
-.task-display-card {
-  transition: filter 0.3s ease;
+
+.edit-keybind-text {
+  max-width: 0;
+  overflow: hidden;
+  transition: max-width 0.5s ease-in-out;
 }
 
-.task-display-card .media-content {
-  cursor: pointer;
+.edit-keybind-button:hover .edit-keybind-text {
+  max-width: 9em;
+  visibility: visible;
 }
 
 .no-display {
@@ -30,17 +34,6 @@
 
 .keybind-input:focus {
   caret-color: transparent;
-}
-
-.edit-keybind-text {
-  max-width: 0;
-  overflow: hidden;
-  transition: max-width 0.5s ease-in-out;
-}
-
-.edit-keybind-button:hover .edit-keybind-text {
-  max-width: 9em;
-  visibility: visible;
 }
 
 .task-display {
@@ -110,7 +103,7 @@
   z-index: 9999;
   border: 1px solid var(--bulma-link-light);
   border-radius: var(--bulma-radius-large);
-  margin: 0;
+  margin-bottom: 1rem;
   transition: all 0.3s ease;
 }
 

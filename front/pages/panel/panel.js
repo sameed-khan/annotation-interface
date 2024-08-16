@@ -12,6 +12,7 @@ import {
   escapeBackslashes,
   notUndoKey,
 } from './validation.js';
+import {LabelKeybindInput} from '../../components/label-keybind-input.ts';
 
 // GLOBAL VARIABLES
 let lkSelectControls = 2; // the html template always starts with 2 label-keybind select fields
@@ -386,6 +387,12 @@ function handleKeybindInputFormValidation(event) {
   }
 }
 
+// handle submit event button disabled if label-keybind-input lit component is invalid
+function handleTaskUpdateFormValidation(event) {
+  const submitButton = document.getElementById('task-edit-form-submit-button');
+  submitButton.disabled = event.detail.isValid === false ? true : false;
+}
+
 // document.getelementbyid('task-creation-form').addeventlistener('submit', function(event) {
 function handleTaskCreationFormSubmit(event) {
   event.preventDefault();
@@ -496,6 +503,7 @@ const HANDLER_MAP = {
     ['#task-assign-form', handleTaskAssignmentFormSubmit],
     ['#task-edit-form', handleTaskUpdateFormSubmit],
   ],
+  validate: [['label-keybind-input', handleTaskUpdateFormValidation]],
 };
 
 // Handle all events via event delegation

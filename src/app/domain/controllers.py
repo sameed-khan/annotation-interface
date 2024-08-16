@@ -1,13 +1,14 @@
 import os
+from pathlib import Path
 from typing import Annotated, Any, Dict, Sequence
 from uuid import UUID
 
-from litestar import Controller, Request, get, post
+from litestar import Controller, Request, get, patch, post
 from litestar.di import Provide
 from litestar.enums import RequestEncodingType
-from litestar.exceptions import NotFoundException
+from litestar.exceptions import NotFoundException, PermissionDeniedException
 from litestar.params import Body
-from litestar.response import Redirect, Response, Template
+from litestar.response import File, Redirect, Response, Template
 from litestar.status_codes import HTTP_200_OK, HTTP_201_CREATED
 
 from app.domain import constants, urls
@@ -17,7 +18,7 @@ from app.domain.dependencies import (
     provide_tasks_service,
     provide_users_service,
 )
-from app.domain.models import TaskData, UserData
+from app.domain.models import AnnotationUpdateData, TaskData, UserData
 from app.domain.schema import Annotation, LabelKeybind, Task, User
 from app.domain.services import AnnotationService, LabelKeybindService, TaskService, UserService
 
@@ -67,7 +68,6 @@ class PageController(Controller):
     )
     async def panel_page(
         self,
-        users_service: UserService,
         tasks_service: TaskService,
         request: Request[User, Any, Any],
     ) -> Template:
@@ -130,7 +130,7 @@ class PageController(Controller):
         print(f"Label keybinds: {label_keybinds_by_task}")
 
         return Template(
-            template_name="panel.html.jinja2",
+            template_name="panel/panel.html.jinja2",
             context={
                 "task_list": task_info_as_dicts,
                 "global_task_list": global_task_info_as_dicts,
@@ -139,6 +139,41 @@ class PageController(Controller):
                 "task_label_keybinds": label_keybinds_by_task,
             },
         )
+
+    @get(
+        path=urls.LABEL_PAGE,
+        operation_id="getLabelPage",
+        name="frontend:label_page",
+        status_code=HTTP_200_OK,
+    )
+    async def label_page(
+        self,
+        task_id: str,
+        tasks_service: TaskService,
+        request: Request[User, Any, Any],
+    ) -> Template:
+        """Serve label page."""
+        # TODO: add check to see if task id is within user_id?
+        task = await tasks_service.get_one(id=task_id)
+        lks = task.label_keybinds
+        annotations = task.annotations
+        labeled = len([a for a in annotations if a.labeled])
+        total = len(annotations)
+
+        context = {
+            "labeled": labeled,
+            "total": total,
+            "progress_percent": round((labeled / total) * 100, 2),
+            "label_keybinds": [
+                {
+                    "label": lk.label,
+                    "keybind": lk.keybind,
+                }
+                for lk in lks
+            ],
+        }
+
+        return Template(template_name="label/label.html.jinja2", context=context)
 
 
 class UserController(Controller):
@@ -269,10 +304,11 @@ class TaskController(Controller):
             auto_commit=True,
             auto_expunge=False,
         )
+        root_folder = Path(data.root)
         files_to_annotate = [
-            os.path.abspath(fl)
-            for fl in os.listdir(data.root)  # cannot use new_task.root_folder since not in ORM call
-            if fl.endswith(tuple(constants.IMAGE_EXTENSIONS))
+            fl.resolve().as_posix()
+            for fl in root_folder.iterdir()  # cannot use new_task.root_folder since not in ORM call
+            if fl.suffix in constants.IMAGE_EXTENSIONS
         ]
         new_annotations = await annotations_service.create_many(
             data=[
@@ -381,16 +417,113 @@ class TaskController(Controller):
             _ = user.assigned_tasks.pop(bool_mask.index(True))
         except ValueError:
             msg = "Task not found in user's task list"
-            return NotFoundException(msg)
+            raise NotFoundException(msg)
 
         return Response(content={"message": "Task successfully deleted"}, status_code=HTTP_200_OK)
+
+
+class AnnotationController(Controller):
+    """Controller for annotation CRUD operations."""
+
+    dependencies = {
+        "users_service": Provide(provide_users_service),
+        "tasks_service": Provide(provide_tasks_service),
+        "annotations_service": Provide(provide_annotations_service),
+        "label_keybinds_service": Provide(provide_label_keybinds_service),
+    }
+
+    @get(
+        path=urls.GET_NEXT_ANNOTATION,
+        operation_id="getNextAnnotation",
+        name="annotation:get_next",
+        exclude_from_auth=False,
+        summary="Get next annotation to label",
+        status_code=HTTP_200_OK,
+    )
+    async def get_next_annotation(self, task_id: str, tasks_service: TaskService) -> File:
+        task = await tasks_service.get_one(id=task_id)
+        unlabeled_annotations = [a for a in task.annotations if not a.labeled]
+
+        if len(unlabeled_annotations) == 0:
+            return File(
+                path=Path("front/assets/images/task-completed.png").resolve(),
+                media_type="image/png",
+                headers={"X-Metadata-AnnotationID": "-999"},
+            )
+
+        next_annotation = unlabeled_annotations[0]
+        print(next_annotation.to_dict())
+        return File(
+            path=Path(next_annotation.filepath).resolve(),
+            media_type="image/png",
+            headers={"X-Metadata-AnnotationID": str(next_annotation.id)},
+        )
+
+    @get(
+        path=urls.GET_ANY_ANNOTATION,
+        operation_id="getAnnotation",
+        name="annotation:get",
+        exclude_from_auth=False,
+        summary="Get any annotation, specified by ID",
+        status_code=HTTP_200_OK,
+    )
+    async def get_annotation(
+        self, tasks_service: TaskService, task_id: str, annotation_id: int
+    ) -> File:
+        task = await tasks_service.get_one(id=task_id)
+        next_annotations: list[Annotation] = [a for a in task.annotations if a.id == annotation_id]
+        if len(next_annotations) == 0:
+            raise PermissionDeniedException("Annotation does not belong to task!")
+        next_annotation = next_annotations[0]
+        return File(
+            path=Path(next_annotation.filepath).resolve(),
+            media_type="image/png",
+            headers={"X-Metadata-AnnotationID": str(next_annotation.id)},
+        )
+
+    @patch(
+        path=urls.UPDATE_ANNOTATION,
+        operation_id="updateAnnotation",
+        name="annotation:update",
+        exclude_from_auth=False,
+        summary="Get next annotation to label",
+        status_code=HTTP_200_OK,
+        media_type="application/json",
+    )
+    async def update(  # noqa: PLR0913 (too many arguments 7 > 5)
+        self,
+        tasks_service: TaskService,
+        annotations_service: AnnotationService,
+        data: Annotated[AnnotationUpdateData, Body(media_type=RequestEncodingType.JSON)],
+        task_id: str,
+        annotation_id: str,
+        request: Request[User, Any, Any],
+    ) -> dict[str, str | int | float]:
+        coerced_task_id = UUID(task_id)
+        coerced_annotation_id = int(annotation_id)
+
+        user_tasks = request.user.assigned_tasks
+        task = await tasks_service.get_one(id=coerced_task_id)
+        if task.id not in [t.id for t in user_tasks]:
+            raise PermissionDeniedException("Task does not belong to user!")
+
+        if coerced_annotation_id > 0:  # negative value is sent as response for all annos complete
+            annotation = await annotations_service.get_one(id=coerced_annotation_id)
+            annotation.label = data.label
+            annotation.labeled = bool(data.label)  # if label is empty string or None, it is False
+
+        task_annotations = task.annotations
+        t1 = len([t for t in task_annotations if t.labeled])
+        print(f"Completed tasks: {t1} out of {len(task_annotations)}")
+        progress = round(((t1) / (len(task_annotations))) * 100, 2)
+        progress = 100 if progress > 100 else progress  # noqa: PLR2004 (replace 100 with const var)
+
+        return {"total": len(task_annotations), "labeled": t1, "progress": progress}
 
 
 class SystemController(Controller):
     """Controller for exposing system information."""
 
-    # TODO: Throws internal server error since msgspec for some reason cannot handle serializing
-    # NotFoundException which is extremely strange.
     @get(
         path=urls.CHECK_PATH,
         operation_id="checkPath",
@@ -408,12 +541,12 @@ class SystemController(Controller):
         """
 
         if not os.path.exists(path):
-            msg = "Path does not exist"
-            return NotFoundException(msg)
+            msg = f"Path {path} does not exist"
+            raise NotFoundException(msg)
 
         elif not os.path.isdir(path):
-            msg = "Path is not a directory"
-            return NotFoundException(msg)
+            msg = f"Path {path} is not a directory"
+            raise NotFoundException(msg)
 
         valid_files = [
             fl

@@ -6,21 +6,11 @@
         <fieldset name="label-keybind-input-form-group" class="task-creation-lk-fieldset column">
           <label class="label">Edit Labels and Keybinds</label>
 
-          {% for label_keybind_set in task_label_keybinds %}
-            <!-- single quotes needed below since json string has double quotes -->
-            <!-- prettier-ignore -->
-            <label-keybind-input lkFields='{{ label_keybind_set | tojson }}'></label-keybind-input>
-          {% endfor %}
-
-          <p class="help is-info dynamic-insert-end-boundary">&nbsp;</p>
-          <div id="task-edit-add-label-button-container" class="control">
-            <button class="add-label-button button is-light is-small" type="button">
-              <span class="icon">
-                <i class="fas fa-plus"></i>
-              </span>
-              <span>Add Label</span>
-            </button>
-          </div>
+          <!-- single quotes needed below since json string has double quotes -->
+          <!-- prettier-ignore -->
+          <label-keybind-input 
+            lkFields="{{ task_label_keybinds[loop.index0] | e }}" 
+          ></label-keybind-input>
         </fieldset>
       </div>
       <div class="column is-half">
@@ -38,7 +28,9 @@
     </div>
     <div class="field is-grouped">
       <div class="control">
-        <button class="button is-link" type="submit">Submit Changes</button>
+        <button id="task-edit-form-submit-button" class="button is-link" type="submit">
+          Submit Changes
+        </button>
       </div>
       <div class="control">
         <button class="button is-link is-ghost cancel-close" type="reset">Cancel</button>
