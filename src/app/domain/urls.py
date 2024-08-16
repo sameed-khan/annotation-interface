@@ -29,6 +29,7 @@ CREATE_TASK = "/api/tasks/create"
 ASSIGN_TASK = "/api/tasks/assign"
 UNASSIGN_TASK = "/api/tasks/unassign"
 UPDATE_TASK = "/api/tasks/update"
+EXPORT_TASK = "/api/tasks/export_annotations"
 
 # ANNOTATION
 UPDATE_ANNOTATION = "/api/annotations/update_annotation"

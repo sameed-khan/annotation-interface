@@ -1,14 +1,16 @@
+import json
 import os
+from collections.abc import AsyncGenerator
 from pathlib import Path
 from typing import Annotated, Any, Dict, Sequence
 from uuid import UUID
 
-from litestar import Controller, Request, get, patch, post
+from litestar import Controller, MediaType, Request, get, patch, post
 from litestar.di import Provide
 from litestar.enums import RequestEncodingType
 from litestar.exceptions import NotFoundException, PermissionDeniedException
 from litestar.params import Body
-from litestar.response import File, Redirect, Response, Template
+from litestar.response import File, Redirect, Response, Stream, Template
 from litestar.status_codes import HTTP_200_OK, HTTP_201_CREATED
 
 from app.domain import constants, urls
@@ -421,6 +423,45 @@ class TaskController(Controller):
 
         return Response(content={"message": "Task successfully deleted"}, status_code=HTTP_200_OK)
 
+    @get(
+        path=urls.EXPORT_TASK,
+        operation_id="exportTask",
+        name="task:export_annotations",
+        exclude_from_auth=False,
+        summary="Export annotations for task",
+        media_type=MediaType.TEXT,
+        status_code=HTTP_200_OK,
+    )
+    async def export_annotations(self, tasks_service: TaskService, task_id: str) -> Stream:
+        task = await tasks_service.get_one(id=task_id)
+        title = task.title
+        annotations = task.annotations
+        labeled_annotations = [a for a in annotations if a.labeled]
+        labeled_annotations = sorted(labeled_annotations, key=lambda a: a.id)
+        labeled_annotations = [
+            {
+                "task_title": title,
+                **a.to_dict(),
+            }
+            for a in labeled_annotations
+        ]
+
+        async def iter_content() -> AsyncGenerator[str, None]:
+            yield "[\n"
+            for i, annotation in enumerate(labeled_annotations):
+                jsonified = json.dumps(annotation, indent=4, default=lambda x: str(x))
+                # Add a comma to the end if it's not the last item
+                jsonified += "," if i < len(labeled_annotations) - 1 else ""
+                # Split the JSON string into lines and prepend each line with four spaces
+                jsonified = "\n".join("    " + line for line in jsonified.split("\n"))
+                yield jsonified + "\n"
+            yield "]\n"
+
+        return Stream(
+            iter_content(),
+            headers={"Content-Disposition": f"attachment; filename={title}_annotations.json"},
+        )
+
 
 class AnnotationController(Controller):
     """Controller for annotation CRUD operations."""
@@ -511,6 +552,7 @@ class AnnotationController(Controller):
             annotation = await annotations_service.get_one(id=coerced_annotation_id)
             annotation.label = data.label
             annotation.labeled = bool(data.label)  # if label is empty string or None, it is False
+            annotation.labeled_by = request.user.id
 
         task_annotations = task.annotations
         t1 = len([t for t in task_annotations if t.labeled])

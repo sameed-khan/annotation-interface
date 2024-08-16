@@ -20,6 +20,7 @@ export const routes = {
   assignTask: '/api/tasks/assign',
   unassignTask: '/api/tasks/unassign',
   updateTask: '/api/tasks/update',
+  exportTask: '/api/tasks/export_annotations',
 
   annotateTask: '/api/annotations/annotate',
   updateAnnotation: '/api/annotations/update_annotation',

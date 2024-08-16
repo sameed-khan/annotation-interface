@@ -137,7 +137,7 @@ export class LabelKeybindInput extends BulmaElement {
     const label = inputElement.value;
 
     const tooLongString = 'Label must be less than 20 characters.';
-    const notAlphanumericString = 'Label can include alphanumerics or underscores only.';
+    const notAlphanumericString = 'Only alphanumeric characters, spaces, and hyphens allowed.';
 
     if (label.length > 20) {
       inputElement.classList.add('is-danger');
@@ -153,7 +153,7 @@ export class LabelKeybindInput extends BulmaElement {
       this.isLabelsValid = true;
     }
 
-    if (!/^[a-zA-Z0-9_]*$/.test(label)) {
+    if (!/^[a-zA-Z0-9\s]*$/.test(label)) {
       inputElement.classList.add('is-danger');
       this.isLabelsValid = false;
       if (!this._helpTextString.includes(notAlphanumericString)) {

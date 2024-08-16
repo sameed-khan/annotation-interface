@@ -171,6 +171,32 @@ function handleTaskDeleteButtonClick(event) {
     });
 }
 
+async function handleTaskExportButtonClick(event) {
+  const taskId = event.currentTarget.dataset.task_id;
+
+  try {
+    const response = await fetch(`${routes.exportTask}?task_id=${encodeURIComponent(taskId)}`);
+    if (!response.ok) throw new Error(`Download failed: ${response.statusText}`);
+
+    const blob = await response.blob();
+    const fileName = response.headers.get('Content-Disposition').split('filename=')[1];
+
+    const url = window.URL.createObjectURL(blob);
+
+    // create a hidden anchor element and click it to download the file
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error(`Download error: ${error}`);
+    alert('An error occured while exporting the task.');
+  }
+}
+
 /**
  *
  * @param {HTMLDialogElement} modal
@@ -348,7 +374,7 @@ function handleKeybindInputFormValidation(event) {
   event.preventDefault();
 
   const inputElement = event.target;
-  inputElement.value = event.key;
+  inputElement.value = event.key.toUpperCase();
   const helpTextElement = inputElement.closest('fieldset').querySelector('p.help');
   const submitButton = document.getElementById('task-creation-submit-button');
 
@@ -491,6 +517,7 @@ const HANDLER_MAP = {
     // Panel Main Page
     ['.task-display-card .media-content', handleTaskCardMouseEvents],
     ['.delete-task-button', handleTaskDeleteButtonClick],
+    ['.export-task-button', handleTaskExportButtonClick],
   ],
   keydown: [['.keybind-input', handleKeybindInputFormValidation]],
   input: [
