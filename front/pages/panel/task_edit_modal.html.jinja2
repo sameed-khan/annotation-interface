@@ -1,5 +1,5 @@
 <dialog id="task-edit-modal-{{ loop.index0 }}" class="nonbulma-modal">
-  <form id="task-edit-form">
+  <form id="task-edit-form" data-task_id="{{ task.id }}">
     <!-- will be submitted via fetch request so attributes not specified-->
     <div class="columns is-2">
       <div class="column is-half">
@@ -9,6 +9,7 @@
           <!-- single quotes needed below since json string has double quotes -->
           <!-- prettier-ignore -->
           <label-keybind-input 
+            name="label-keybind-data"
             lkFields="{{ task_label_keybinds[loop.index0] | e }}" 
           ></label-keybind-input>
         </fieldset>
@@ -20,7 +21,12 @@
             <div class="control task-file-select-control">
               {% for filename in task.files %}
                 <label class="b-checkbox checkbox task-file-select">
-                  <input type="checkbox" checked />
+                  <input
+                    type="checkbox"
+                    name="file-{{ loop.index0 }}"
+                    value="{{ filename }}"
+                    checked
+                  />
                   <span class="check is-info"></span>
                   <span class="control-label">{{ filename | get_basefile_name }}</span>
                 </label>

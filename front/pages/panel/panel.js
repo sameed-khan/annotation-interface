@@ -129,6 +129,30 @@ function generateRequestFromTaskAssignmentForm(formData) {
   return taskData;
 }
 
+function generateRequestFromTaskEditForm(formData) {
+  /**
+   * formData:
+   *  {                                                                                             {
+   *    label-keybind-data<JSON string>: "[{'lk_id': UUID, 'label': 'some_label', 'keybind': 'A'}, ...]",            keep as is just unstringify
+   *    file-0: "file1.jpg",                                                                    =>    files: ["file1.jpg", "file2.jpg", ...]
+   *    file-1: "file2.jpg",
+   *  ...                                                                                           }
+   *  }
+   */
+
+  let taskData = {
+    label_keybinds: JSON.parse(formData.get('label-keybind-data')),
+    files: [
+      ...formData
+        .entries()
+        .filter(([key, _]) => key.startsWith('file-'))
+        .map(([_, value]) => value),
+    ],
+  };
+
+  return taskData;
+}
+
 // EVENT HANDLER FUNCTIONS
 function handleTaskCreateModalOpen(event) {
   const modalTrigger = event.target.closest('.js-modal-trigger');
@@ -480,9 +504,11 @@ function handleTaskUpdateFormSubmit(event) {
   event.preventDefault();
   let formData = new FormData(event.target);
   const formElement = event.target;
-  let taskData = generateRequestFromTaskCreationForm(formData);
-  fetch(routes.updateTask, {
-    method: 'POST',
+  const taskId = formElement.closest('.task-display-card').dataset.task_id;
+  let taskData = generateRequestFromTaskEditForm(formData);
+  let updateRoute = `${routes.updateTask}?task_id=${encodeURIComponent(taskId)}`;
+  fetch(updateRoute, {
+    method: 'PATCH',
     body: JSON.stringify(taskData),
     headers: {
       'Content-Type': 'application/json',
@@ -500,7 +526,7 @@ function handleTaskUpdateFormSubmit(event) {
     .catch((error) => {
       console.error(error);
       formElement.reset();
-      alert('An error occurred while creating the task.');
+      alert('An error occurred while updating the task.');
     });
 }
 

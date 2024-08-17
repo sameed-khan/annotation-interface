@@ -3,7 +3,7 @@
  * on any input event or keydown event, examine all of the inputs and check for validity
  * rather than relying on a bottom-up approach regulating the individual input elements themselves
  */
-import {TemplateResult, html, css} from 'lit';
+import {PropertyValues, TemplateResult, css, html} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
 import {BulmaElement} from './bulma-element';
 
@@ -33,7 +33,7 @@ export class LabelKeybindInput extends BulmaElement {
       }
     },
   })
-  lkFields: Array<{label: string; keybind: string}> = [];
+  lkFields: Array<{label: string; keybind: string; id: string}> = [];
   @state() private _templates: TemplateResult[] = [];
   @state() private _helpTextString: String[] = [];
   @state() private _numLks = 0;
@@ -47,16 +47,49 @@ export class LabelKeybindInput extends BulmaElement {
     `,
   ];
 
+  static formAssociated = true;
+  public internals: ElementInternals | undefined;
+
   constructor() {
     super();
-    this.addEventListener('keydown', this._isKeybindsUnique);
-    this.addEventListener('input', this._isLabelsUnique);
+    this.internals = this.attachInternals();
+    this.addEventListener('keydown', () => {
+      this._isKeybindsUnique();
+      this._updateFormData();
+    });
+    this.addEventListener('input', () => {
+      this._isLabelsUnique();
+      this._updateFormData();
+    });
   }
 
   connectedCallback() {
     super.connectedCallback();
-    console.log(this.lkFields);
     this._numLks = this.lkFields.length;
+  }
+
+  firstUpdated(changedProperties: PropertyValues) {
+    super.firstUpdated(changedProperties);
+    this._updateFormData();
+  }
+
+  protected _updateFormData() {
+    const labelInputs: HTMLInputElement[] = Array.from(
+      this.renderRoot.querySelectorAll('.label-input') as NodeListOf<HTMLInputElement>
+    );
+    const keybindInputs: HTMLInputElement[] = Array.from(
+      this.renderRoot.querySelectorAll('.keybind-input') as NodeListOf<HTMLInputElement>
+    );
+
+    const labelKeybindPairs = labelInputs.map((labelInput, index) => {
+      return {
+        lk_id: labelInput.dataset.db_id,
+        label: labelInput.value,
+        keybind: keybindInputs[index].value,
+      };
+    });
+    console.log(`Updating form data with ${JSON.stringify(labelKeybindPairs)}`);
+    this.internals?.setFormValue(JSON.stringify(labelKeybindPairs));
   }
 
   // Fires off a validate event whenever validation occurs
@@ -263,6 +296,7 @@ export class LabelKeybindInput extends BulmaElement {
                 class="input label-input"
                 type="text"
                 value=${element.label.toUpperCase()}
+                data-db_id=${element.id}
                 maxlength="20"
                 required
                 @input=${this._isLabelValid}

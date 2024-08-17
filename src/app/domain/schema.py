@@ -5,12 +5,10 @@ from advanced_alchemy.base import BigIntAuditBase, UUIDAuditBase
 from sqlalchemy import CHAR, Boolean, Column, Float, ForeignKey, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-user_tasks = Table(
-    "user_tasks",
-    UUIDAuditBase.metadata,
-    Column("user_id", ForeignKey("users.id"), primary_key=True),
-    Column("task_id", ForeignKey("tasks.id"), primary_key=True),
-)
+# Written in this weird way to satisfy mypy
+user_id_column: Column[UUID] = Column("user_id", ForeignKey("users.id"), primary_key=True)
+task_id_column: Column[UUID] = Column("task_id", ForeignKey("tasks.id"), primary_key=True)
+user_tasks = Table("user_tasks", UUIDAuditBase.metadata, user_id_column, task_id_column)
 
 
 class User(UUIDAuditBase):
@@ -25,7 +23,7 @@ class User(UUIDAuditBase):
         "Task", secondary=user_tasks, back_populates="contributors", lazy="selectin"
     )
     label_keybinds = relationship(
-        "LabelKeybind", back_populates="user", lazy="selectin", cascade="all, delete"
+        "LabelKeybind", back_populates="user", lazy="selectin", cascade="all, delete-orphan"
     )
 
 
@@ -44,10 +42,13 @@ class Task(UUIDAuditBase):
         lazy="selectin",
     )
     annotations = relationship(
-        "Annotation", back_populates="associated_task", lazy="selectin", cascade="all, delete"
+        "Annotation",
+        back_populates="associated_task",
+        lazy="selectin",
+        cascade="all, delete-orphan",
     )
     label_keybinds = relationship(
-        "LabelKeybind", back_populates="task", lazy="selectin", cascade="all, delete"
+        "LabelKeybind", back_populates="task", lazy="selectin", cascade="all, delete-orphan"
     )
 
 

@@ -20,7 +20,7 @@ from app.domain.dependencies import (
     provide_tasks_service,
     provide_users_service,
 )
-from app.domain.models import AnnotationUpdateData, TaskData, UserData
+from app.domain.models import AnnotationUpdateData, TaskData, TaskUpdateData, UserData
 from app.domain.schema import Annotation, LabelKeybind, Task, User
 from app.domain.services import AnnotationService, LabelKeybindService, TaskService, UserService
 
@@ -109,7 +109,7 @@ class PageController(Controller):
             label_keybinds: list[LabelKeybind] = task.label_keybinds
             label_keybinds_by_task.append(
                 [
-                    {"label": lk.label, "keybind": lk.keybind}
+                    {"label": lk.label, "keybind": lk.keybind, "id": str(lk.id)}
                     for lk in label_keybinds
                     if lk.user_id == user_id
                 ]
@@ -441,6 +441,103 @@ class TaskController(Controller):
             raise NotFoundException(msg)
 
         return Response(content={"message": "Task successfully deleted"}, status_code=HTTP_200_OK)
+
+    @patch(
+        path=urls.UPDATE_TASK,
+        operation_id="updateTask",
+        name="task:update_task",
+        exclude_from_auth=False,
+        summary="Update task with new keybinds and annotations",
+        status_code=HTTP_200_OK,
+    )
+    async def update_task(  # noqa: PLR0913 (too many arguments 7 > 5)
+        self,
+        tasks_service: TaskService,
+        label_keybinds_service: LabelKeybindService,
+        annotations_service: AnnotationService,
+        request: Request[User, Any, Any],
+        data: Annotated[TaskUpdateData, Body(media_type=RequestEncodingType.JSON)],
+        task_id: UUID,
+    ) -> Response[Dict[str, str | int]]:
+        """Update task with new keybinds and annotations."""
+        task = await tasks_service.get_one(id=task_id)
+        task_annotations = task.annotations
+        user_id = request.user.id
+        task_label_keybinds = [t for t in task.label_keybinds if t.user_id == user_id]
+
+        # Update keybinds
+        new_lks: list[LabelKeybind] = []
+        new_anno_files = data.files
+
+        for lk in data.label_keybinds:
+            new_lks.append(
+                LabelKeybind(
+                    id=lk["lk_id"],  # type: ignore since we check for presence of id on line 481
+                    label=lk["label"],
+                    keybind=lk["keybind"],
+                    user_id=user_id,
+                    task_id=task_id,
+                )
+                if lk.get("lk_id")
+                else LabelKeybind(
+                    label=lk["label"],
+                    keybind=lk["keybind"],
+                    user_id=user_id,
+                    task_id=task_id,
+                )
+            )
+        # Setting auto_commit to False enables attribute access on objects
+        # afterwards
+        # Setting auto_commit to True causes greenlet_spawn error
+        # load="*" is not strictly necessary (I haven't investigated to see what it does)
+        # but it is 100% not necessary for a bug-free operation here - I just like the idea of
+        # having all the data loaded in the object
+
+        new_lks_objects = await label_keybinds_service.upsert_many(
+            data=new_lks, auto_commit=False, auto_expunge=False, load="*"
+        )
+
+        # Remove all label_keybinds from task that weren't supplied by user
+        lks_to_remove: list[LabelKeybind] = []
+        for lk_obj in task_label_keybinds:
+            if lk_obj.id not in [lk.id for lk in new_lks_objects]:
+                lks_to_remove.append(lk_obj)
+
+        task.label_keybinds = [lk for lk in task.label_keybinds if lk not in lks_to_remove]
+
+        # Update annotations in task
+        filename_index_map = {
+            Path(f).resolve(): task_annotations[i]
+            for i, f in enumerate([a.filepath for a in task_annotations])
+        }
+        previous_filenames = set(filename_index_map.keys())
+        new_filenames = set([Path(f).resolve() for f in new_anno_files])
+
+        filenames_to_remove: set[Path] = previous_filenames - new_filenames
+        filenames_to_add: set[Path] = new_filenames - previous_filenames
+
+        if len(filenames_to_remove) > 0:
+            for remove_filename in filenames_to_remove:
+                task.annotations.remove(filename_index_map[remove_filename])
+
+        if len(filenames_to_add) > 0:
+            annotations_to_create: list[Annotation] = []
+            for add_filename in filenames_to_add:
+                annotations_to_create.append(
+                    Annotation(
+                        label=None,
+                        labeled=False,
+                        labeled_by=None,
+                        filepath=str(add_filename),
+                        task_id=task_id,
+                    )
+                )
+            new_annotations: Sequence[Annotation] = await annotations_service.create_many(
+                data=annotations_to_create, auto_commit=False, auto_expunge=False, load="*"
+            )
+            task.annotations.extend(new_annotations)
+
+        return Response({"content": "success", "status_code": HTTP_200_OK})
 
     @get(
         path=urls.EXPORT_TASK,

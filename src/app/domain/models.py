@@ -1,9 +1,10 @@
 import os
 import re
-from typing import List, Self, TypedDict
+from typing import List, NotRequired, Self, TypedDict
 from urllib.parse import unquote
+from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
+from pydantic import BaseModel, Field, StringConstraints, model_validator
 from pydantic.functional_validators import AfterValidator, BeforeValidator
 from typing_extensions import Annotated
 
@@ -43,13 +44,21 @@ def handle_path_escapes(path: str) -> str:
     return re.sub(constants.RE_WIN_BACKSLASH, lambda match: match.group() + "\\", path)
 
 
-def validate_path(path: str) -> str:
+def validate_directory_path(path: str) -> str:
     if not os.path.exists(path):
         print(path)
         raise ValueError("Path does not exist")
     elif not os.path.isdir(path):
         print(path)
         raise ValueError("Path is not a directory")
+
+    return path
+
+
+def validate_path(path: str) -> str:
+    if not os.path.exists(path):
+        print(path)
+        raise ValueError("Path does not exist")
 
     return path
 
@@ -61,12 +70,19 @@ def validate_keybind(keybind: str) -> str:
     return keybind
 
 
-ValidPath = Annotated[
+ValidURIEncodedDirectoryPath = Annotated[
     str,
     BeforeValidator(handle_path_escapes),
     BeforeValidator(validate_path_is_uri_encoded),
+    AfterValidator(validate_directory_path),
+]
+
+ValidPath = Annotated[
+    str,
+    BeforeValidator(handle_path_escapes),
     AfterValidator(validate_path),
 ]
+
 ValidLabel = Annotated[
     str,
     StringConstraints(min_length=1, max_length=20, pattern=r"^[a-zA-Z0-9\s-]+$"),
@@ -81,16 +97,14 @@ ValidKeybind = Annotated[
 
 
 class LabelKeybindDict(TypedDict):
+    lk_id: NotRequired[UUID]
     label: ValidLabel
     keybind: ValidKeybind
 
 
 # TASK
-class TaskData(BaseModel):
-    title: str = Field(..., max_length=50, description="Title of task")
-    root: ValidPath
+class TaskBaseData(BaseModel):
     label_keybinds: List[LabelKeybindDict]
-    model_config = ConfigDict(json_schema_extra={"extra": "some extra stuff"})
 
     @model_validator(mode="after")
     def validate_keybinds(self) -> Self:
@@ -105,6 +119,15 @@ class TaskData(BaseModel):
             raise ValueError("Number of labels and keybinds do not match.")
 
         return self
+
+
+class TaskData(TaskBaseData):
+    title: str = Field(..., max_length=50, description="Title of task")
+    root: ValidURIEncodedDirectoryPath
+
+
+class TaskUpdateData(TaskBaseData):
+    files: List[ValidPath] = Field(..., description="Files to be added to task")
 
 
 # ANNOTATION
