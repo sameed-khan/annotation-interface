@@ -85,8 +85,12 @@ class PageController(Controller):
         task_info_as_dicts: list[dict[str, Any]] = []
         for task in user_tasks:
             task_annotations = task.annotations
+            selected_filepaths = [Path(a.filepath).resolve() for a in task_annotations]
             files_to_annotate = [
-                f
+                {
+                    "path": str(f),
+                    "is_selected": Path(f).resolve() in selected_filepaths,
+                }
                 for f in list(Path(task.root_folder).iterdir())
                 if f.suffix in constants.IMAGE_EXTENSIONS
             ]

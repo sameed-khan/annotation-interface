@@ -19,16 +19,24 @@
           <label class="label">Select Images to Include</label>
           <div class="field">
             <div class="control task-file-select-control">
-              {% for filename in task.files %}
+              {% for file_info in task.files %}
                 <label class="b-checkbox checkbox task-file-select">
-                  <input
-                    type="checkbox"
-                    name="file-{{ loop.index0 }}"
-                    value="{{ filename }}"
-                    checked
-                  />
+                  {% if file_info.is_selected %}
+                    <input
+                      type="checkbox"
+                      name="file-{{ loop.index0 }}"
+                      value="{{ file_info.path }}"
+                      checked
+                    />
+                  {% else %}
+                    <input
+                      type="checkbox"
+                      name="file-{{ loop.index0 }}"
+                      value="{{ file_info.path }}"
+                    />
+                  {% endif %}
                   <span class="check is-info"></span>
-                  <span class="control-label">{{ filename | get_basefile_name }}</span>
+                  <span class="control-label">{{ file_info.path | get_basefile_name }}</span>
                 </label>
               {% endfor %}
             </div>
