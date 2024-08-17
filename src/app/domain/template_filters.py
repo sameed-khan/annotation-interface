@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 
@@ -18,3 +19,7 @@ def format_and_localize_timestamp(value: datetime):  # TODO: get timezone from e
 
 def truncate_string(value: str, length: int) -> str:
     return value[:length] + "..." if len(value) > length else value
+
+
+def get_basefile_name(value: str) -> str:
+    return Path(value).name

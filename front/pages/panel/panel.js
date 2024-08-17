@@ -154,7 +154,7 @@ function handleTaskEditModalOpen(event) {
 }
 
 function handleTaskDeleteButtonClick(event) {
-  const taskId = event.currentTarget.dataset.task_id;
+  const taskId = event.target.closest('.task-display-card').dataset.task_id;
   fetch(`${routes.unassignTask}?task_id=${encodeURIComponent(taskId)}`)
     .then((response) => {
       if (!response.ok) {
@@ -172,7 +172,7 @@ function handleTaskDeleteButtonClick(event) {
 }
 
 async function handleTaskExportButtonClick(event) {
-  const taskId = event.currentTarget.dataset.task_id;
+  const taskId = event.target.closest('.task-display-card').dataset.task_id;
 
   try {
     const response = await fetch(`${routes.exportTask}?task_id=${encodeURIComponent(taskId)}`);
@@ -516,8 +516,8 @@ const HANDLER_MAP = {
     // ['.js-modal-trigger.edit-keybind-button', handleTaskEditModalOpen],
     // Panel Main Page
     ['.task-display-card .media-content', handleTaskCardMouseEvents],
-    ['.delete-task-button', handleTaskDeleteButtonClick],
-    ['.export-task-button', handleTaskExportButtonClick],
+    ['.delete-task-option', handleTaskDeleteButtonClick],
+    ['.export-task-option', handleTaskExportButtonClick],
   ],
   keydown: [['.keybind-input', handleKeybindInputFormValidation]],
   input: [

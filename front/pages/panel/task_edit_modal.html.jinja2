@@ -1,7 +1,7 @@
 <dialog id="task-edit-modal-{{ loop.index0 }}" class="nonbulma-modal">
   <form id="task-edit-form">
     <!-- will be submitted via fetch request so attributes not specified-->
-    <div class="columns">
+    <div class="columns is-2">
       <div class="column is-half">
         <fieldset name="label-keybind-input-form-group" class="task-creation-lk-fieldset column">
           <label class="label">Edit Labels and Keybinds</label>
@@ -14,16 +14,20 @@
         </fieldset>
       </div>
       <div class="column is-half">
-        <label class="label">Select Images to Include</label>
-        <div class="field">
-          <div class="control task-file-select-control">
-            <label class="b-checkbox checkbox task-file-select">
-              <input type="checkbox" checked />
-              <span class="check is-info"></span>
-              <span class="control-label">{{ filename }}</span>
-            </label>
+        <fieldset name="file-select-form-group" class="column">
+          <label class="label">Select Images to Include</label>
+          <div class="field">
+            <div class="control task-file-select-control">
+              {% for filename in task.files %}
+                <label class="b-checkbox checkbox task-file-select">
+                  <input type="checkbox" checked />
+                  <span class="check is-info"></span>
+                  <span class="control-label">{{ filename | get_basefile_name }}</span>
+                </label>
+              {% endfor %}
+            </div>
           </div>
-        </div>
+        </fieldset>
       </div>
     </div>
     <div class="field is-grouped">

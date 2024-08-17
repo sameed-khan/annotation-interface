@@ -153,7 +153,7 @@ export class LabelKeybindInput extends BulmaElement {
       this.isLabelsValid = true;
     }
 
-    if (!/^[a-zA-Z0-9\s]*$/.test(label)) {
+    if (!/^[a-zA-Z0-9\-\s]*$/.test(label)) {
       inputElement.classList.add('is-danger');
       this.isLabelsValid = false;
       if (!this._helpTextString.includes(notAlphanumericString)) {

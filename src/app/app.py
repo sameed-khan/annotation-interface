@@ -32,6 +32,7 @@ from app.domain.controllers import (
 from app.domain.schema import User
 from app.domain.template_filters import (
     format_and_localize_timestamp,
+    get_basefile_name,
     reduce_slashes,
     truncate_string,
 )
@@ -88,6 +89,7 @@ jinja_env.filters.update(
         "reduce_slashes": reduce_slashes,
         "filter_timestamp": format_and_localize_timestamp,
         "truncate_string": truncate_string,
+        "get_basefile_name": get_basefile_name,
     }
 )
 

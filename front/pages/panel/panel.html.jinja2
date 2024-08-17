@@ -26,11 +26,12 @@
               <div class="card task-display-card" data-task_id="{{ task.id }}">
                 <div class="card-content">
                   <div class="media">
+                    <a class="task-card-link" href="/label?task_id={{ task.id }}"></a>
                     <div class="non-button-card-content media-left">
                       <figure class="image is-64x64">
                         <!-- webpackIgnore: true -->
                         <img
-                          src="/panel/get_task_profile_picture?root_folder={{ task.root_folder }}"
+                          src="/api/pages/get_task_thumbnail?task_id={{ task.id }}"
                           alt="Placeholder image"
                         />
                       </figure>
@@ -65,76 +66,51 @@
                       </div>
                     </div>
 
-                    <div class="task-card-button-container media-right is-flex is-flex-wrap-wrap">
-                      <button
-                        id="task-edit-button-{{ loop.index0 }}"
-                        class="button is-link js-modal-trigger edit-keybind-button pr-2 pl-3"
-                        data-target="task-edit-modal-{{ loop.index0 }}"
-                        data-task_id="{{ task.id }}"
-                      >
-                        <span class="icon-text">
+                    <div class="media-right task-card-display-dropdown">
+                      <div class="dropdown meatball-menu is-hoverable">
+                        <span class="icon-text is-clickable">
                           <span class="icon is-small m-0">
-                            <i class="fas fa-cog"></i>
+                            <i class="meatball-icon fas fa-angle-down"></i>
                           </span>
-                          <span class="edit-keybind-text">Edit Settings&nbsp;</span>
-                          <!-- &nbsp to even out spacing on either side of the button-->
                         </span>
-                      </button>
-
-                      <div class="break my-1"></div>
-
-                      <button
-                        id="task-delete-button-{{ loop.index0 }}"
-                        class="button is-danger has-text-white js-modal-trigger delete-task-button edit-keybind-button pr-2 pl-3"
-                        data-task_id="{{ task.id }}"
-                      >
-                        <span class="icon-text">
-                          <span class="icon is-medium m-0">
-                            <i class="fas fa-user-minus"></i>
-                          </span>
-                          <span class="edit-keybind-text">Unassign Task&nbsp;</span>
-                          <!-- &nbsp to even out spacing on either side of the button-->
-                        </span>
-                      </button>
-
-                      <div class="break my-1"></div>
-                      <a
-                        href="/label?task_id={{ task.id }}"
-                        class="button is-primary has-text-white edit-keybind-button pr-2 pl-3"
-                      >
-                        <span class="icon-text">
-                          <span class="icon is-medium m-0">
-                            <i class="fas fa-edit"></i>
-                          </span>
-                          <span class="edit-keybind-text">Annotate! &nbsp;</span>
-                          <!-- &nbsp to even out spacing on either side of the button-->
-                        </span>
-                      </a>
-
-                      <div class="break my-1"></div>
-
-                      <button
-                        class="button is-warning has-text-white edit-keybind-button pr-2 pl-3 export-task-button"
-                        data-task_id="{{ task.id }}"
-                      >
-                        <span class="icon-text">
-                          <span class="icon is-medium m-0">
-                            <i class="fas fa-file-export"></i>
-                          </span>
-                          <span class="edit-keybind-text">Export Annotations&nbsp;</span>
-                          <!-- &nbsp to even out spacing on either side of the button-->
-                        </span>
-                      </button>
+                        <div class="dropdown-menu">
+                          <div class="dropdown-content">
+                            <a
+                              class="dropdown-item js-modal-trigger"
+                              data-target="task-edit-modal-{{ loop.index0 }}"
+                              data-task_id="{{ task.id }}"
+                              style="margin-left: -2px;"
+                            >
+                              <span class="icon is-small">
+                                <i class="fas fa-cog"></i>
+                              </span>
+                              <span style="margin-left: 6px">Edit Settings</span>
+                            </a>
+                            <a class="dropdown-item delete-task-option">
+                              <span class="icon is-small">
+                                <i class="fas fa-user-minus"></i>
+                              </span>
+                              <span class="ml-1">Remove Task</span>
+                            </a>
+                            <a class="dropdown-item export-task-option">
+                              <span class="icon is-small">
+                                <i class="fas fa-file-export"></i>
+                              </span>
+                              <span class="ml-1">Export Annotations</span>
+                            </a>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {# Need to render task edit dialog inside this for loop #}
-              {%
-                include
-                "task_edit_modal.html.jinja2" with context
-              %}
+                {# Need to render task edit dialog inside this for loop #}
+                {%
+                  include
+                  "task_edit_modal.html.jinja2" with context
+                %}
+              </div>
             {% endfor %}
           {% else %}
             <div class="no-task-notification notification has-background-grey-lighter">

@@ -9,6 +9,30 @@
   padding: 10rem;
 }
 
+.task-card-link {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.task-display-card {
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.task-display-card:has(.task-card-link:hover) {
+  background-color: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+.task-card-display-dropdown {
+  z-index: 2;
+}
+                  
+/* CARD MENU CONTROLS */
 .edit-keybind-text {
   max-width: 0;
   overflow: hidden;
@@ -24,6 +48,30 @@
   display: none;
 }
 
+.meatball-menu {
+  position: relative;
+  cursor: pointer;
+}
+
+.meatball-menu::before {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 0;
+  top: 50%;
+  left: 50%;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  transition: width 0.3s ease, height 0.3s ease;
+  transform: translate(-50%, -50%);
+}
+
+.meatball-menu:hover::before, .meatball-menu.is-active::before {
+  width: 2rem;
+  height: 2rem;
+}
+
+/* PANEL TASK EDIT SETTINGS MODAL */
 .keybind-control {
   width: 6.7rem;
 }
@@ -37,6 +85,7 @@
 }
 
 .task-display {
+  height: 80vh;
   max-height: 80vh;
   overflow-y: scroll;
 }
@@ -162,43 +211,3 @@
   position: relative;
   box-sizing: border-box;
 }
-
-/* Styling for the little circle progress bar */
-/* .ring-container {
-  width: var(--circle-constant);
-  height: var(--circle-constant);
-  transform: rotate(-90deg);
-  transform-origin: 50% 50%;
-}
-
-.progress-text {
-  transform: rotate(90deg);
-  transform-origin: 50% 50%;
-  fill: var(--bulma-link);
-  font-weight: bold;
-}
-
-.progress-ring {
-  fill: transparent;
-  stroke-width: calc(0.1 * var(--circle-constant));
-  cx: calc(0.5 * var(--circle-constant));
-  cy: calc(0.5 * var(--circle-constant));
-  r: calc(0.4 * var(--circle-constant));
-}
-
-.pr-circle {
-  stroke: #a5acb9;
-}
-
-.pr-path {
-  stroke: #1e3050;
-  stroke-linecap: round;
-  stroke-dasharray: calc(2 * pi * 0.5 * var(--circle-constant));
-  stroke-dashoffset: calc(0.4 * 2 * pi * var(--circle-constant));
-}
-
-.progress-percentage {
-  position: absolute;
-  top: 50%;
-  right: 50%;
-} */

@@ -17,6 +17,7 @@ CHECK_PATH = "/api/system/check_path"
 LOGIN_PAGE = "/login"
 TASK_PANEL_PAGE = "/panel"
 LABEL_PAGE = "/label"
+TASK_THUMBNAIL = "/api/pages/get_task_thumbnail"
 
 # USER
 LOGIN_USER = "/api/users/login"

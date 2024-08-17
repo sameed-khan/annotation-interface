@@ -85,6 +85,11 @@ class PageController(Controller):
         task_info_as_dicts: list[dict[str, Any]] = []
         for task in user_tasks:
             task_annotations = task.annotations
+            files_to_annotate = [
+                f
+                for f in list(Path(task.root_folder).iterdir())
+                if f.suffix in constants.IMAGE_EXTENSIONS
+            ]
             creator_name = task.creator.username if task.creator is not None else "Unknown"
             task_info_as_dicts.append(
                 {
@@ -93,6 +98,7 @@ class PageController(Controller):
                     "creator_name": creator_name,
                     "total": len(task_annotations),
                     "completed": len([a for a in task_annotations if a.labeled]),
+                    "files": files_to_annotate,
                     **task.to_dict(),
                 }
             )
@@ -152,7 +158,6 @@ class PageController(Controller):
         self,
         task_id: str,
         tasks_service: TaskService,
-        request: Request[User, Any, Any],
     ) -> Template:
         """Serve label page."""
         # TODO: add check to see if task id is within user_id?
@@ -176,6 +181,19 @@ class PageController(Controller):
         }
 
         return Template(template_name="label/label.html.jinja2", context=context)
+
+    @get(
+        path=urls.TASK_THUMBNAIL,
+        operation_id="getTaskThumbnail",
+        name="frontend:task_thumbnail",
+        status_code=HTTP_200_OK,
+    )
+    async def get_task_thumbnail(self, task_id: str, tasks_service: TaskService) -> File:
+        task = await tasks_service.get_one(id=task_id)
+        annotations = task.annotations
+        path_to_first_image = annotations[0].filepath
+
+        return File(path=Path(path_to_first_image).resolve(), media_type="image/png")
 
 
 class UserController(Controller):
@@ -365,7 +383,8 @@ class TaskController(Controller):
         tasks_to_update = []
         new_lks = []
         for task in tasks:
-            if any([user_id == lk.user_id for lk in task.label_keybinds]):
+            task_lks = task.label_keybinds
+            if any([user_id == lk.user_id for lk in task_lks]):
                 continue
 
             lks_to_create = []
@@ -432,7 +451,9 @@ class TaskController(Controller):
         media_type=MediaType.TEXT,
         status_code=HTTP_200_OK,
     )
-    async def export_annotations(self, tasks_service: TaskService, task_id: str) -> Stream:
+    async def export_annotations(
+        self, users_service: UserService, tasks_service: TaskService, task_id: str
+    ) -> Stream:
         task = await tasks_service.get_one(id=task_id)
         title = task.title
         annotations = task.annotations
@@ -441,7 +462,15 @@ class TaskController(Controller):
         labeled_annotations = [
             {
                 "task_title": title,
-                **a.to_dict(),
+                "task_id": a.task_id,
+                "annotation_id": a.id,
+                "labeled_by": await users_service.get_one(id=a.labeled_by)
+                if a.labeled_by
+                else "Unknown",
+                "created_at": a.created_at,
+                "updated_at": a.updated_at,
+                "filepath": a.filepath,
+                "label": a.label,
             }
             for a in labeled_annotations
         ]
