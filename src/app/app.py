@@ -98,23 +98,19 @@ jinja_env.filters.update(
 #     async with db_config.get_engine().begin() as conn:
 #         await conn.run_sync(Base.metadata.create_all)
 
-webpack_bundle_router = create_static_files_router(
+static_files_router = create_static_files_router(
     path=urls.ASSETS_ENDPOINT,
     directories=["dist/static"],
 )
 
 app = Litestar(
-    # route_handlers=[PageController, UserController, panel_page, check_username, create_new_user,
-    #                 get_task_profile_picture, get_task_keybinds, label_update_annotation,
-    #                 label_undo_annotation, label_page, label_get_next_image, label_get_image,
-    #                 create_static_files_router(path="static", directories=["static"])],
     route_handlers=[
         PageController,
         UserController,
         SystemController,
         TaskController,
         AnnotationController,
-        webpack_bundle_router,
+        static_files_router,
     ],
     template_config=TemplateConfig(instance=JinjaTemplateEngine.from_environment(jinja_env)),
     # on_startup=[on_startup],

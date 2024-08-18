@@ -1,5 +1,6 @@
 # API URLs
-# NOTE: ALL URLs defined in this file must be synced with the frontend URLs defined in src/static/scripts/routes.js
+# NOTE: ALL URLs defined in this file must be synced with the frontend URLs defined in
+# src/static/scripts/routes.js
 
 # Python    | JS
 # All Caps  | camelCase

@@ -241,7 +241,7 @@ class UserController(Controller):
         self,
         users_service: UserService,
         data: Annotated[UserData, Body(media_type=RequestEncodingType.URL_ENCODED)],
-        request: Request[Any, Any, Any],
+        request: Request[User, Any, Any],
     ) -> Redirect:
         """Create a new user."""
         user = await users_service.create(
@@ -254,7 +254,7 @@ class UserController(Controller):
             auto_refresh=True,
         )
         print(f"Created user: {user.to_dict()}")
-        request.set_session({"user_id": user.id})
+        request.set_session({"user_id": user.id})  # type: ignore
         return Redirect(path=urls.TASK_PANEL_PAGE)
 
     @post(
@@ -274,7 +274,7 @@ class UserController(Controller):
         # litestar automatically handles PermissionDeniedException and
         # transmission to client
         user = await users_service.authenticate(data.request_username, data.request_password)
-        request.set_session({"user_id": user.id})
+        request.set_session({"user_id": user.id})  # type: ignore
         return Response(
             content={"url": urls.TASK_PANEL_PAGE}, status_code=HTTP_200_OK
         )  # No Redirect since POST is coming from fetch
@@ -389,22 +389,22 @@ class TaskController(Controller):
         user = await users_service.get_one(id=user_id)
         tasks = await tasks_service.get_many_by_id(data["tasks_to_add_ids"])
 
-        tasks_to_update = []
-        new_lks = []
+        tasks_to_update: list[Task] = []
+        new_lks: list[Sequence[LabelKeybind]] = []
         for task in tasks:
             task_lks = task.label_keybinds
             if any([user_id == lk.user_id for lk in task_lks]):
                 continue
 
-            lks_to_create = []
+            lks_to_create: list[LabelKeybind] = []
             for i, lk in enumerate(task.label_keybinds):
                 lks_to_create.append(
-                    {
-                        "label": lk.label,
-                        "keybind": constants.DEFAULT_KEYBINDS_IN_ORDER[i],
-                        "user_id": user_id,
-                        "task_id": task.id,
-                    }
+                    LabelKeybind(
+                        label=lk.label,
+                        keybind=constants.DEFAULT_KEYBINDS_IN_ORDER[i],
+                        user_id=user_id,
+                        task_id=task.id,
+                    )
                 )
 
             # The readability of the code below is worth the performance hit (to me) of using
@@ -445,9 +445,9 @@ class TaskController(Controller):
         bool_mask = [UUID(task_id) == t.id for t in user.assigned_tasks]
         try:
             _ = user.assigned_tasks.pop(bool_mask.index(True))
-        except ValueError:
+        except ValueError as exc:
             msg = "Task not found in user's task list"
-            raise NotFoundException(msg)
+            raise NotFoundException(msg) from exc
 
         return Response(content={"message": "Task successfully deleted"}, status_code=HTTP_200_OK)
 
