@@ -90,7 +90,7 @@ ValidLabel = Annotated[
 ]
 ValidKeybind = Annotated[
     str,
-    StringConstraints(max_length=1),
+    StringConstraints(max_length=1, min_length=1),
     AfterValidator(validate_keybind),
     Field(..., description="Keybind for label"),
 ]

@@ -3,9 +3,11 @@
  * on any input event or keydown event, examine all of the inputs and check for validity
  * rather than relying on a bottom-up approach regulating the individual input elements themselves
  */
-import {PropertyValues, TemplateResult, css, html} from 'lit';
+import {PropertyValues, css, html} from 'lit';
+import {ifDefined} from 'lit/directives/if-defined.js';
 import {customElement, property, state} from 'lit/decorators.js';
 import {BulmaElement} from './bulma-element';
+import {sortByKeyboardLayout, KEYBOARD_LAYOUT} from '../shared/scripts/utilities';
 
 @customElement('label-keybind-input')
 export class LabelKeybindInput extends BulmaElement {
@@ -33,16 +35,17 @@ export class LabelKeybindInput extends BulmaElement {
       }
     },
   })
-  lkFields: Array<{label: string; keybind: string; id: string}> = [];
-  @state() private _templates: TemplateResult[] = [];
+  lkFields: Array<{label: string | null; keybind: string | null; id: string | null}> = [];
   @state() private _helpTextString: String[] = [];
-  @state() private _numLks = 0;
 
   static styles = [
     BulmaElement.styles,
     css`
       .keybind-input:focus {
         caret-color: transparent;
+      }
+      .delete-label-keybind-field-button {
+        margin-right: -0.5rem;
       }
     `,
   ];
@@ -53,11 +56,13 @@ export class LabelKeybindInput extends BulmaElement {
   constructor() {
     super();
     this.internals = this.attachInternals();
-    this.addEventListener('keydown', () => {
+    this.addEventListener('keydown', (event) => {
+      this._updatePropertyFromEvent(event);
       this._isKeybindsUnique();
       this._updateFormData();
     });
-    this.addEventListener('input', () => {
+    this.addEventListener('input', (event) => {
+      this._updatePropertyFromEvent(event);
       this._isLabelsUnique();
       this._updateFormData();
     });
@@ -65,7 +70,7 @@ export class LabelKeybindInput extends BulmaElement {
 
   connectedCallback() {
     super.connectedCallback();
-    this._numLks = this.lkFields.length;
+    this.lkFields.sort((a, b) => sortByKeyboardLayout(a.keybind, b.keybind));
   }
 
   firstUpdated(changedProperties: PropertyValues) {
@@ -74,19 +79,20 @@ export class LabelKeybindInput extends BulmaElement {
   }
 
   protected _updateFormData() {
-    const labelInputs: HTMLInputElement[] = Array.from(
-      this.renderRoot.querySelectorAll('.label-input') as NodeListOf<HTMLInputElement>
-    );
-    const keybindInputs: HTMLInputElement[] = Array.from(
-      this.renderRoot.querySelectorAll('.keybind-input') as NodeListOf<HTMLInputElement>
-    );
-
-    const labelKeybindPairs = labelInputs.map((labelInput, index) => {
-      return {
-        lk_id: labelInput.dataset.db_id,
-        label: labelInput.value,
-        keybind: keybindInputs[index].value,
-      };
+    // TODO: can we just return lkFields?
+    // have to figure out how the backend processes null value for lk_id
+    // to figure that out -- if we pass in null how does that get passed onto the backend?
+    const labelKeybindPairs = this.lkFields.map((lkField) => {
+      return lkField.id
+        ? {
+            lk_id: lkField.id,
+            label: lkField.label,
+            keybind: lkField.keybind,
+          }
+        : {
+            label: lkField.label,
+            keybind: lkField.keybind,
+          };
     });
     console.log(`Updating form data with ${JSON.stringify(labelKeybindPairs)}`);
     this.internals?.setFormValue(JSON.stringify(labelKeybindPairs));
@@ -102,62 +108,59 @@ export class LabelKeybindInput extends BulmaElement {
     );
   }
 
+  protected _updatePropertyFromEvent(event: Event) {
+    // update lkFields with the new values
+    // this function updates regardless of validation status
+    const parentField = <HTMLDivElement>(
+      (<Element>event.composedPath()[0])!.closest('div.label-keybind-input-field')
+    );
+    console.log(parentField);
+    const lkFieldsIndex = Number(parentField.dataset.index);
+    const label = (<HTMLInputElement>parentField.querySelector('.label-input'))!.value;
+    const keybind = (<HTMLInputElement>parentField.querySelector('.keybind-input'))!.value;
+
+    // we want the assumption that _addLabelKeybindInput will always be called before this
+    // and will have created the member in lkFields array that we will now modify
+    this.lkFields[lkFieldsIndex] = {label: label, keybind: keybind, id: null};
+  }
+
   protected _addLabelKeybindInput() {
-    // create a new div
-    this._numLks++;
-    const newLabelKeybindField = html`
-      <div class="field is-grouped label-keybind-input-field dynamic-inserted-element mb-1">
-        <div class="control is-expanded">
-          <input
-            name="label-input-${this._numLks}"
-            class="input label-input"
-            type="text"
-            placeholder="Enter label"
-            maxlength="20"
-            required
-            @input=${this._isLabelValid}
-          />
-        </div>
-        <div class="control keybind-control has-text-centered is-expanded">
-          <input
-            name="keybind-input-${this._numLks}"
-            class="input keybind-input"
-            autocomplete="off"
-            readonly
-            onfocus="this.removeAttribute('readonly')"
-            @keydown=${this._isKeybindValid}
-          />
-        </div>
-      </div>
-    `;
-    this._templates = [...this._templates, newLabelKeybindField];
+    // since redefining lkFields, this will trigger a re-render
+    this.lkFields = [...this.lkFields, {label: null, keybind: null, id: null}];
+  }
+
+  protected _deleteLabelKeybindInput(e: Event) {
+    const button = <HTMLButtonElement>e.currentTarget;
+    const parent = <HTMLDivElement>button.closest('div.label-keybind-input-field');
+
+    const lkFieldsIndex = Number(parent.dataset.index);
+    this.lkFields = this.lkFields.filter((_, index) => index !== lkFieldsIndex);
+    this._updateFormData(); // update here because there may have been input in the field
   }
 
   // closer to keybind element so executed before _isKeybindsUnique
   protected _isKeybindValid(e: Event) {
     e.preventDefault();
 
-    const key = e as KeyboardEvent;
-    const inputElement = e.target as HTMLInputElement;
+    const key = <KeyboardEvent>e;
+    const inputElement = <HTMLInputElement>e.target;
+    const invalidKeybindString = 'Keybind must be alphabetical (except z), semicolon, or space.';
 
-    // Ensure key behavior such that key press shows keybind
-    inputElement.value = key.key.toUpperCase();
-    if (key.key === ' ') {
-      inputElement.value = 'SPACE';
+    let keyValue = key.key.toUpperCase();
+    if (keyValue === ' ') {
+      keyValue = 'SPACE';
     }
+    inputElement.value = keyValue;
 
-    if (
-      key.shiftKey ||
-      key.ctrlKey ||
-      key.altKey ||
-      key.metaKey ||
-      key.key === 'z' ||
-      key.key === 'Z'
-    ) {
+    if (!KEYBOARD_LAYOUT.includes(keyValue.toLowerCase())) {
       inputElement.classList.add('is-danger');
       this.isKeybindsValid = false;
+      if (!this._helpTextString.includes(invalidKeybindString)) {
+        this._helpTextString = [...this._helpTextString, invalidKeybindString];
+      }
     } else {
       this.isKeybindsValid = true;
+      this._helpTextString = this._helpTextString.filter((text) => text !== invalidKeybindString);
       if (inputElement.classList.contains('is-danger')) {
         inputElement.classList.remove('is-danger');
       }
@@ -289,14 +292,22 @@ export class LabelKeybindInput extends BulmaElement {
     return html`
       ${this.lkFields.map(
         (element, index) => html`
-          <div class="field is-grouped label-keybind-input-field dynamic-inserted-element mb-1">
+          <div class="field is-grouped label-keybind-input-field mb-1" data-index="${index}">
+            <button
+              class="button delete-label-keybind-field-button is-small is-outlined is-danger is-light"
+              @click=${this._deleteLabelKeybindInput}
+            >
+              <span class="icon">
+                <i class="fa fa-x"></i>
+              </span>
+            </button>
             <div class="control is-expanded">
               <input
                 name="label-input-${index}"
                 class="input label-input"
                 type="text"
-                value=${element.label.toUpperCase()}
-                data-db_id=${element.id}
+                value=${element.label?.toUpperCase() ? element.label.toUpperCase() : ''}
+                data-db_id=${ifDefined(element.id)}
                 maxlength="20"
                 required
                 @input=${this._isLabelValid}
@@ -306,17 +317,17 @@ export class LabelKeybindInput extends BulmaElement {
               <input
                 name="keybind-input-${index}"
                 class="input keybind-input"
-                value=${element.keybind.toUpperCase()}
+                value=${element.keybind?.toUpperCase() ? element.keybind.toUpperCase() : ''}
                 autocomplete="off"
                 readonly
                 onfocus="this.removeAttribute('readonly')"
+                required
                 @keydown=${this._isKeybindValid}
               />
             </div>
           </div>
         `
       )}
-      ${this._templates}
       <p class="help is-info dynamic-insert-end-boundary">
         ${this._helpTextString.length === 0 ? html`&nbsp;` : this._helpTextString.join(' ')}
       </p>

@@ -14,6 +14,7 @@ from litestar.response import File, Redirect, Response, Stream, Template
 from litestar.status_codes import HTTP_200_OK, HTTP_201_CREATED
 
 from app.domain import constants, urls
+from app.domain.constants import KEYBOARD_LAYOUT
 from app.domain.dependencies import (
     provide_annotations_service,
     provide_label_keybinds_service,
@@ -164,6 +165,14 @@ class PageController(Controller):
         tasks_service: TaskService,
     ) -> Template:
         """Serve label page."""
+
+        def sort_by_keyboard_layout(key: str):
+            try:
+                index = KEYBOARD_LAYOUT.index(key.lower())
+            except ValueError:
+                index = -1
+            return index
+
         # TODO: add check to see if task id is within user_id?
         task = await tasks_service.get_one(id=task_id)
         lks = task.label_keybinds
@@ -171,17 +180,13 @@ class PageController(Controller):
         labeled = len([a for a in annotations if a.labeled])
         total = len(annotations)
 
+        label_keybinds = [{"label": lk.label, "keybind": lk.keybind} for lk in lks]
+        label_keybinds.sort(key=lambda x: sort_by_keyboard_layout(x["keybind"]))
         context = {
             "labeled": labeled,
             "total": total,
             "progress_percent": round((labeled / total) * 100, 2),
-            "label_keybinds": [
-                {
-                    "label": lk.label,
-                    "keybind": lk.keybind,
-                }
-                for lk in lks
-            ],
+            "label_keybinds": label_keybinds,
         }
 
         return Template(template_name="label/label.html.jinja2", context=context)
