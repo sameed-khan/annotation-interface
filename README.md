@@ -1,6 +1,6 @@
 # Annotation Interface
 
-![A screenshot of the Anki-style labeling interface of the repository software](/static/assets/interface-screenshot.png)
+![A screenshot of the Anki-style labeling interface of the repository software](front/assets/images/interface-screenshot.png)
 
 A simple web application interface for annotating images of any kind.
 Point the application to the folder where images are stored on your hard drive and enjoy a clean Anki-style labeling interface with labels bound to home-row keys.

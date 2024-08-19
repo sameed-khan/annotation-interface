@@ -30,7 +30,15 @@ build-backend = "hatchling.build"
 
 [tool.rye]
 managed = true
-dev-dependencies = []
+dev-dependencies = [
+    "pytest>=8.3.2",
+    "pillow>=10.4.0",
+    "noise>=1.2.2",
+    "numpy>=2.1.0",
+    "scipy>=1.14.0",
+    "tqdm>=4.66.5",
+    "types-tqdm>=4.66.0.20240417",
+]
 
 [tool.hatch.metadata]
 allow-direct-references = true
@@ -78,3 +86,7 @@ warn_required_dynamic_aliases = true
 [[tool.mypy.overrides]]
 module = "pydantic.*"
 ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["src/tests"]
+pythonpath = "src"

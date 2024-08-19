@@ -13,6 +13,7 @@ SCHEMA_ENDPOINT = "/schema"
 
 # SYSTEM INFORMATION
 CHECK_PATH = "/api/system/check_path"
+CHECK_HEALTH = "/api/system/check_health"
 
 # PAGE URLS
 LOGIN_PAGE = "/login"

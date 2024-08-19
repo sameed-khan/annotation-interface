@@ -54,6 +54,8 @@ httpx==0.27.0
 idna==3.7
     # via anyio
     # via httpx
+iniconfig==2.0.0
+    # via pytest
 jinja2==3.1.4
     # via litestar
 jsbeautifier==1.15.1
@@ -80,8 +82,16 @@ mypy==1.10.1
     # via hfhs-annotation-interface
 mypy-extensions==1.0.0
     # via mypy
+noise==1.2.2
+numpy==2.1.0
+    # via scipy
+packaging==24.1
+    # via pytest
 passlib==1.7.4
     # via hfhs-annotation-interface
+pillow==10.4.0
+pluggy==1.5.0
+    # via pytest
 polyfactory==2.16.0
     # via litestar
 pycparser==2.22
@@ -92,6 +102,7 @@ pydantic-core==2.20.0
     # via pydantic
 pygments==2.18.0
     # via rich
+pytest==8.3.2
 python-dateutil==2.9.0.post0
     # via faker
 python-dotenv==1.0.1
@@ -108,6 +119,7 @@ rich-click==1.8.3
     # via litestar
 ruff==0.5.0
     # via hfhs-annotation-interface
+scipy==1.14.0
 six==1.16.0
     # via jsbeautifier
     # via python-dateutil
@@ -117,6 +129,8 @@ sniffio==1.3.1
 sqlalchemy==2.0.31
     # via advanced-alchemy
     # via alembic
+tqdm==4.66.5
+types-tqdm==4.66.0.20240417
 typing-extensions==4.12.2
     # via advanced-alchemy
     # via aiosqlite

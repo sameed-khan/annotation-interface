@@ -662,7 +662,7 @@ class AnnotationController(Controller):
         operation_id="updateAnnotation",
         name="annotation:update",
         exclude_from_auth=False,
-        summary="Get next annotation to label",
+        summary="Update annotation with label from keybind",
         status_code=HTTP_200_OK,
         media_type="application/json",
     )
@@ -740,3 +740,14 @@ class SystemController(Controller):
             )
         ]
         return Response(content={"file_count": len(valid_files)}, status_code=HTTP_200_OK)
+
+    @get(
+        path=urls.CHECK_HEALTH,
+        media_type=MediaType.TEXT,
+        operation_id="checkHealth",
+        exclude_from_auth=True,
+        summary="Test if anything is working",
+        status_code=HTTP_200_OK,
+    )
+    async def check_health(self) -> str:
+        return "we are live!"
