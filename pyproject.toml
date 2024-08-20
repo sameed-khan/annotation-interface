@@ -88,5 +88,5 @@ module = "pydantic.*"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-testpaths = ["src/tests"]
+testpaths = ["tests"]
 pythonpath = "src"

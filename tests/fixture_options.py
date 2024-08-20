@@ -95,7 +95,7 @@ FIXTURE_OPTIONS = FixtureOptions(
         "meniscus",
         "clavicle",
     ],
-    fixtures_folder="/home/sameed/projects/hfhs_annotation_interface/src/tests/fixtures",
+    fixtures_folder="/home/sameed/projects/hfhs_annotation_interface/tests/fixtures",
     test_user={  # a test user that will always be used in all tests
         "id": "233c01cd-0ed1-4a36-a19f-019247a60551",
         "username": "captain_ababo",
@@ -105,7 +105,7 @@ FIXTURE_OPTIONS = FixtureOptions(
     test_task={  # a test task that will the point of reference in all tests
         "id": "7c9b0f02-dc02-47ed-9d3a-3bef365f79c4",
         "title": "When Finish?",
-        "root_folder": "/home/sameed/projects/hfhs_annotation_interface/src/tests/fixtures/annotations/test",
+        "root_folder": "/home/sameed/projects/hfhs_annotation_interface/tests/fixtures/annotations/test",
         "creator_id": "233c01cd-0ed1-4a36-a19f-019247a60551",
     },
 )
