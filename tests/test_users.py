@@ -5,10 +5,13 @@ from typing import Any, Dict, Literal
 import pytest
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from litestar import Litestar
-from litestar.status_codes import HTTP_200_OK, HTTP_401_UNAUTHORIZED
+from litestar.status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZED
 from litestar.testing import AsyncTestClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain import urls
+from app.domain.schema import User
 
 pytestmark = pytest.mark.anyio
 
@@ -55,3 +58,25 @@ async def test_login(
         secret: bytes = client.app.middleware[-1].kwargs["config"].session_backend_config.secret  # type: ignore
         session = helper_decode_string(response.cookies["session"], secret)  # type: ignore
         assert "user_id" in session
+
+
+async def test_create_user(client: AsyncTestClient[Litestar], session: AsyncSession):
+    # TODO: refactor user request and receive as DTO
+    response = await client.post(
+        urls.CREATE_USER,
+        json={"request_username": "new_user", "request_password": "new_password"},
+    )
+    result = await session.execute(select(User).where(User.username == "new_user"))
+    user = result.scalar_one_or_none()
+
+    jsonified = response.json()
+    response_id, response_username = jsonified["id"], jsonified["username"]
+
+    assert response.status_code == HTTP_201_CREATED
+
+    assert user is not None
+    assert user.username == "new_user"
+    assert user.password == "new_password"
+
+    assert response_id == str(user.id)
+    assert response_username == user.username

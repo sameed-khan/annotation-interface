@@ -24,7 +24,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         "--teardown-fixtures",
         action="store_true",
         default=False,
-        help="Tear down fixtures after testing session completed",
+        help="Tear down fixtures after tests. Regenerating fixtures on next run takes time.",
     )
 
 
@@ -41,6 +41,16 @@ def setup(request: pytest.FixtureRequest) -> Generator[None, None, None]:
 @pytest.fixture(scope="session")
 def anyio_backend():
     return "asyncio"
+
+
+@pytest.fixture(name="test_user")
+async def fx_test_user() -> dict[str, str | int | float]:
+    return FIXTURE_OPTIONS.test_user
+
+
+@pytest.fixture(name="test_task")
+async def fx_test_task() -> dict[str, str]:
+    return FIXTURE_OPTIONS.test_task
 
 
 @pytest.fixture(name="client")
