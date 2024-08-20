@@ -240,9 +240,9 @@ class UserController(Controller):
     async def create_user(
         self,
         users_service: UserService,
-        data: Annotated[UserData, Body(media_type=RequestEncodingType.URL_ENCODED)],
+        data: Annotated[UserData, Body(media_type=RequestEncodingType.JSON)],
         request: Request[User, Any, Any],
-    ) -> Redirect:
+    ) -> Response[dict[str, str]]:
         """Create a new user."""
         user = await users_service.create(
             data=User(
@@ -253,9 +253,14 @@ class UserController(Controller):
             auto_expunge=True,
             auto_refresh=True,
         )
-        print(f"Created user: {user.to_dict()}")
         request.set_session({"user_id": user.id})  # type: ignore
-        return Redirect(path=urls.TASK_PANEL_PAGE)
+        return Response(
+            content={
+                "id": str(user.id),
+                "username": user.username,
+                "url": urls.TASK_PANEL_PAGE,
+            }
+        )
 
     @post(
         path=urls.LOGIN_USER,
