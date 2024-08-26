@@ -14,6 +14,9 @@ TRUE_VALUES = {"True", "true", "1", "yes", "Y", "T"}
 class DatabaseSettings:
     """Settings for SQLAlchemy and database instantiation"""
 
+    BACKUP: bool = (
+        field(default_factory=lambda: os.getenv("DATABASE_BACKUP", "True")) in TRUE_VALUES
+    )
     ECHO: bool = field(default_factory=lambda: os.getenv("DATABASE_ECHO", "False")) in TRUE_VALUES
     URL: str = field(
         default_factory=lambda: os.getenv("DATABASE_URL", "sqlite+aiosqlite:///dev.db")
