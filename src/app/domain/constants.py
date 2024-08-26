@@ -21,7 +21,7 @@ DEFAULT_KEYBINDS_IN_ORDER = [
     "I",
     "O",
     "P",
-    "Z",
+    # cannot include Z since needed for ctrl + z
     "X",
     "C",
     "V",

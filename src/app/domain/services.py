@@ -1,4 +1,5 @@
 from typing import Any, Sequence
+from uuid import UUID
 
 from advanced_alchemy.service import SQLAlchemyAsyncRepositoryService
 from litestar.exceptions import NotAuthorizedException
@@ -75,6 +76,52 @@ class TaskService(SQLAlchemyAsyncRepositoryService[Task]):
             return res
 
         return []
+
+    async def update_task(
+        self,
+        task_id: UUID,
+        user_id: UUID,
+        label_keybinds: list[LabelKeybind],
+        annotations: list[Annotation],
+    ) -> Task:
+        """Update a task with new label keybinds and annotations."""
+        async with self.repository.session.begin():
+            task = await self.get_one(id=task_id)
+            await self._update_task_label_keybinds(user_id, task, label_keybinds)
+            await self._update_task_annotations(task, annotations)
+
+        return task
+
+    async def _update_task_label_keybinds(
+        self, user_id: UUID, task: Task, label_keybinds: list[LabelKeybind]
+    ) -> Task:
+        """Update a task's label keybinds."""
+        # Remove all label keybinds for the user, preserving other users' keybinds
+        task.label_keybinds = [lk for lk in task.label_keybinds if lk.user_id != user_id]
+        task.label_keybinds.extend(label_keybinds)
+        return task
+
+    async def _update_task_annotations(self, task: Task, annotations: list[Annotation]) -> Task:
+        """
+        Update a task's annotations. Selectively replaces annotations
+        Case 1: Previously selected, still selected annotation
+        Case 2: Previously selected, now unselected annotation
+        Case 3: Previously unselected, now selected annotation
+        """
+        task_annos_updated: list[Annotation] = []
+        anno_filepaths = [anno.filepath for anno in annotations]
+        for anno in task.annotations:
+            if anno.filepath in anno_filepaths:  # was previously selected, still selected
+                task_annos_updated.append(anno)
+                # the below annotation is the same as the one in the task so we do not have to
+                # save it to later add to the task's annotations through list.extend and
+                # cause the annotation label to be reset
+                annotations.remove([a for a in annotations if a.filepath == anno.filepath][0])
+            else:  # was previously unselected, now selected
+                continue  # do not add to task_annos_updated
+
+        task.annotations.extend(annotations)  # now clear of duplicates, handles case 3
+        return task
 
 
 class LabelKeybindService(SQLAlchemyAsyncRepositoryService[LabelKeybind]):

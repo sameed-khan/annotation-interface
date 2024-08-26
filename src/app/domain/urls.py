@@ -8,7 +8,6 @@
 
 
 # MISC
-ASSETS_ENDPOINT = "/static"
 SCHEMA_ENDPOINT = "/schema"
 
 # SYSTEM INFORMATION

@@ -17,7 +17,7 @@ from typing import Any
 from uuid import uuid4
 
 import numpy as np
-from fixture_options import FIXTURE_OPTIONS
+from fixture_options import FIXTURE_OPTIONS, TestTask, TestUser
 from PIL import Image
 from tqdm import tqdm
 
@@ -88,7 +88,7 @@ def check_is_generated() -> bool:
     if not annos_folder.exists():
         return False
 
-    scopes = ["users", "tasks", "label_keybinds", "annotations"]
+    scopes = ["users", "tasks", "label_keybinds", "annotations", "user_tasks"]
     is_json_generated = all(
         [Path(f"{ fixtures_folder / Path(scope) }.json").exists() for scope in scopes]
     )
@@ -115,10 +115,12 @@ def generate_fixtures() -> None:
         shutil.rmtree(Path(FIXTURE_OPTIONS.fixtures_folder).resolve())
         os.makedirs(Path(FIXTURE_OPTIONS.fixtures_folder).resolve())
 
-    users: list[dict[str, Any]] = []
-    tasks: list[dict[str, Any]] = []
+    users: list[TestUser] = []
+    tasks: list[TestTask] = []
     label_keybinds: list[dict[str, Any]] = []
     annotations: list[dict[str, Any]] = []
+    user_tasks: list[dict[str, str]] = []
+
     annos_folder = Path(FIXTURE_OPTIONS.fixtures_folder).resolve() / Path("annotations")
 
     # Generate for initial test user
@@ -126,6 +128,7 @@ def generate_fixtures() -> None:
     os.makedirs(new_annotations_folder, exist_ok=True)
     users.append(FIXTURE_OPTIONS.test_user)
     tasks.append(FIXTURE_OPTIONS.test_task)
+    user_tasks.append({str(FIXTURE_OPTIONS.test_user["id"]): str(FIXTURE_OPTIONS.test_task["id"])})
     label_set = random.sample(FIXTURE_OPTIONS.label_set, FIXTURE_OPTIONS.num_lks_per_user)
     keybind_set = random.sample(FIXTURE_OPTIONS.keybind_set, FIXTURE_OPTIONS.num_lks_per_user)
     label_keybinds.extend(
@@ -161,7 +164,7 @@ def generate_fixtures() -> None:
     users.extend(
         [
             {
-                "id": uuid4(),
+                "id": str(uuid4()),
                 "username": generate_random_string(5, Case.LOWERCASE),
                 "password": generate_random_string(5, Case.UPPERCASE),
                 "annotation_rate": 0.0,
@@ -187,6 +190,7 @@ def generate_fixtures() -> None:
                 "creator_id": user["id"],
             }
             tasks.append(new_task)
+            user_tasks.append({str(user["id"]): str(new_task["id"])})
             label_keybinds.extend(
                 [
                     {
@@ -210,8 +214,9 @@ def generate_fixtures() -> None:
                 annotations.append(new_anno)
                 generate_random_image(new_anno["filepath"])  # type: ignore
 
-    all_dicts = [users, tasks, label_keybinds, annotations]
-    scopes = ["users", "tasks", "label_keybinds", "annotations"]
+    user_tasks.extend({str(user["id"]): str(task["id"])} for (user, task) in zip(users, tasks))
+    all_dicts = [users, tasks, label_keybinds, annotations, user_tasks]
+    scopes = ["users", "tasks", "label_keybinds", "annotations", "user_tasks"]
     for data, filename in zip(all_dicts, scopes):
         with open(Path(FIXTURE_OPTIONS.fixtures_folder) / Path(f"{filename}.json"), "w") as f:
             json.dump(data, f, indent=4, default=lambda x: str(x))

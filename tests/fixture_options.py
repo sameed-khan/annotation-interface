@@ -3,9 +3,23 @@ Options for fixture generation, comes provided with some sensible defaults.
 """
 
 from pathlib import Path
-from typing import Self
+from typing import Self, TypedDict
 
 from pydantic import BaseModel, Field, model_validator
+
+
+class TestUser(TypedDict):
+    id: str
+    username: str
+    password: str
+    annotation_rate: float
+
+
+class TestTask(TypedDict):
+    id: str
+    title: str
+    root_folder: str
+    creator_id: str
 
 
 class FixtureOptions(BaseModel):
@@ -18,8 +32,8 @@ class FixtureOptions(BaseModel):
     keybind_set: list[str]
     label_set: list[str]
     fixtures_folder: str
-    test_user: dict[str, str | int | float]
-    test_task: dict[str, str]
+    test_user: TestUser
+    test_task: TestTask
 
     @model_validator(mode="after")
     def validate_model(self) -> Self:

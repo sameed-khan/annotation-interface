@@ -40,7 +40,7 @@ def handle_path_escapes(path: str) -> str:
     """
     Escape odd numbered sequences of backslashes by adding one backslash.
     """
-
+    path = unquote(path)
     return re.sub(constants.RE_WIN_BACKSLASH, lambda match: match.group() + "\\", path)
 
 
@@ -73,7 +73,6 @@ def validate_keybind(keybind: str) -> str:
 ValidURIEncodedDirectoryPath = Annotated[
     str,
     BeforeValidator(handle_path_escapes),
-    BeforeValidator(validate_path_is_uri_encoded),
     AfterValidator(validate_directory_path),
 ]
 
@@ -128,6 +127,13 @@ class TaskData(TaskBaseData):
 
 class TaskUpdateData(TaskBaseData):
     files: List[ValidPath] = Field(..., description="Files to be added to task")
+
+    @model_validator(mode="after")
+    def validate_unique_files(self) -> Self:
+        if len(self.files) != len(set(self.files)):
+            raise ValueError("Duplicate files found in files.")
+
+        return self
 
 
 # ANNOTATION
