@@ -42,7 +42,7 @@ class TestTaskCreation:
             ],
         }
 
-    async def test_success(self, test_user: dict[str, str | int | float]):
+    async def test_success(self):
         response = await self.client.post(
             urls.CREATE_TASK,
             json=self.test_task,
@@ -54,7 +54,7 @@ class TestTaskCreation:
         TODO: this test currently fails because setting session data doesn't remove
         previously defined other active user from session
         """
-        await self.client.set_session_data({})  # remove active user from session
+        await self.client.set_session_data({"user_id": None})  # remove active user from session
         response = await self.client.post(urls.CREATE_TASK, json=self.test_task)
         assert response.status_code == HTTP_401_UNAUTHORIZED
 
@@ -212,9 +212,10 @@ class TestTaskUpdate:
         k = random.randint(1, len(ttmp))
         filenames = [str(fp) for fp in random.sample(ttmp, k)]
 
-        TempTypeDict = TypedDict(
-            "TempTypeDict", {"label_keybinds": list[dict[str, str]], "files": list[str]}
-        )
+        class TempTypeDict(TypedDict):
+            label_keybinds: list[dict[str, str]]
+            files: list[str]
+
         self.task: TempTypeDict = {"label_keybinds": test_lks, "files": filenames}
 
     async def test_success(
