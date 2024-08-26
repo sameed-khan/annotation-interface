@@ -47,7 +47,7 @@ allow-direct-references = true
 packages = ["src/hfhs_annotation_interface"]
 
 [tool.rye.scripts]
-_litestar = "python -m src.app run --debug"
+server = "litestar --app-dir src run --debug"
 ruff = "ruff check ."
 ruff-fix = "ruff check --fix ."
 mypy = "mypy ."

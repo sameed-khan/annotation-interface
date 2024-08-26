@@ -1,7 +1,8 @@
 # Mostly copied from https://github.com/litestar-org/litestar-fullstack/blob/main/src/app/__main__.py
 
+
 def run_cli() -> None:
-    """ Application Entrypoint """
+    """Application Entrypoint"""
     import os
     import sys
     from pathlib import Path
@@ -15,7 +16,7 @@ def run_cli() -> None:
     except ImportError as exc:
         print(
             "Could not load required libarires. ",
-            "Please check your installation and make sure you have activated any necessary virtual environment"
+            "Please check your installation and activate any necessary virtual environment",
         )
         print(exc)
         sys.exit(1)
