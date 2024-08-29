@@ -138,4 +138,4 @@ class TaskUpdateData(TaskBaseData):
 
 # ANNOTATION
 class AnnotationUpdateData(BaseModel):
-    label: str = Field(..., max_length=20, description="New label assigned to annotation")
+    label: ValidLabel

@@ -24,9 +24,7 @@ pytestmark = pytest.mark.anyio
 
 class TestTaskCreation:
     @pytest.fixture(autouse=True)
-    def setup(
-        self, client: AsyncTestClient[Litestar], test_user: dict[str, str | int | float]
-    ) -> None:
+    def setup(self, client: AsyncTestClient[Litestar]) -> None:
         """Necessary to guarantee that the instance attributes are set before any test runs"""
         self.client = client
         self.test_task = {
@@ -75,9 +73,7 @@ class TestTaskCreation:
         ]
         assert inserted_lks == self.test_task["label_keybinds"]
 
-    async def test_annotation_creation(
-        self, test_user: dict[str, str | int | float], session: AsyncSession
-    ):
+    async def test_annotation_creation(self, session: AsyncSession):
         """When a task is created, corresponding annotations should be created for images in root"""
         await self.client.post(
             urls.CREATE_TASK,
@@ -191,9 +187,7 @@ class TestTaskUpdate:
     """
 
     @pytest.fixture(autouse=True)
-    def setup(
-        self, client: AsyncTestClient[Litestar], test_user: dict[str, str | int | float]
-    ) -> None:
+    def setup(self, client: AsyncTestClient[Litestar]) -> None:
         self.client = client
         test_lks = [
             {"label": "humerus", "keybind": "q"},

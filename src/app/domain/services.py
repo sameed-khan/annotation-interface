@@ -110,16 +110,22 @@ class TaskService(SQLAlchemyAsyncRepositoryService[Task]):
         """
         task_annos_updated: list[Annotation] = []
         anno_filepaths = [anno.filepath for anno in annotations]
+        idxs_to_remove: list[int] = []
         for anno in task.annotations:
             if anno.filepath in anno_filepaths:  # was previously selected, still selected
                 task_annos_updated.append(anno)
-                # the below annotation is the same as the one in the task so we do not have to
+                # the above annotation is the same as the one in the task so we do not have to
                 # save it to later add to the task's annotations through list.extend and
                 # cause the annotation label to be reset
-                annotations.remove([a for a in annotations if a.filepath == anno.filepath][0])
-            else:  # was previously unselected, now selected
+                idxs_to_remove.append(anno_filepaths.index(anno.filepath))
+            else:  # was previously selected, now unselected
                 continue  # do not add to task_annos_updated
 
+        # pop indices in descending order to prevent index out of range errors
+        for idx in sorted(idxs_to_remove, reverse=True):
+            annotations.pop(idx)
+
+        task.annotations = task_annos_updated
         task.annotations.extend(annotations)  # now clear of duplicates, handles case 3
         return task
 

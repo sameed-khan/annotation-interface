@@ -143,8 +143,7 @@ async def test_unassign_user_from_task(
     - check whether task label keybind is not deleted
     - ^^ ensures that keybinds are there again if the task is reassigned
     """
-    # Ideally would not have to do act-arrange-assert but need to in order to view database
-    # updates
+    # Ideally would not have to do act-arrange-assert but need to in order to view database updates
     async with UserService.new(sessionmaker()) as users_service:
         old_user = await users_service.get_one(id=test_user["id"])  # type: ignore
         old_user_lks = [str(lk.id) for lk in old_user.label_keybinds]

@@ -469,8 +469,6 @@ class TaskController(Controller):
     async def update_task(  # noqa: PLR0913 (too many arguments 7 > 5)
         self,
         tasks_service: TaskService,
-        label_keybinds_service: LabelKeybindService,
-        annotations_service: AnnotationService,
         request: Request[User, Any, Any],
         data: Annotated[TaskUpdateData, Body(media_type=RequestEncodingType.JSON)],
         task_id: UUID,
@@ -632,19 +630,18 @@ class AnnotationController(Controller):
         annotations_service: AnnotationService,
         data: Annotated[AnnotationUpdateData, Body(media_type=RequestEncodingType.JSON)],
         task_id: str,
-        annotation_id: str,
+        annotation_id: int,
         request: Request[User, Any, Any],
     ) -> dict[str, str | int | float]:
         coerced_task_id = UUID(task_id)
-        coerced_annotation_id = int(annotation_id)
 
         user_tasks = request.user.assigned_tasks
         task = await tasks_service.get_one(id=coerced_task_id)
         if task.id not in [t.id for t in user_tasks]:
             raise PermissionDeniedException("Task does not belong to user!")
 
-        if coerced_annotation_id > 0:  # negative value is sent as response for all annos complete
-            annotation = await annotations_service.get_one(id=coerced_annotation_id)
+        if annotation_id > 0:  # negative value is sent as response for all annos complete
+            annotation = await annotations_service.get_one(id=annotation_id)
             annotation.label = data.label
             annotation.labeled = bool(data.label)  # if label is empty string or None, it is False
             annotation.labeled_by = request.user.id
