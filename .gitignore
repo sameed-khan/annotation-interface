@@ -25,6 +25,9 @@ wheels/
 # Exclude downloaded files for offline work
 front/assets/images/sample
 
+# Exclude hospital-specific branding
+front/assets/images/hf-full-logo.svg
+
 # node modules of course
 node_modules/
 
