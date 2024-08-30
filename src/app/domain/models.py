@@ -45,10 +45,8 @@ def handle_path_escapes(path: str) -> str:
 
 def validate_directory_path(path: str) -> str:
     if not os.path.exists(path):
-        print(path)
         raise ValueError("Path does not exist")
     elif not os.path.isdir(path):
-        print(path)
         raise ValueError("Path is not a directory")
 
     return path
@@ -56,7 +54,6 @@ def validate_directory_path(path: str) -> str:
 
 def validate_path(path: str) -> str:
     if not os.path.exists(path):
-        print(path)
         raise ValueError("Path does not exist")
 
     return path

@@ -138,10 +138,6 @@ class PageController(Controller):
                 }
             )
 
-        print(f"User task list: {task_info_as_dicts}")
-        print(f"Global task list: {global_task_info_as_dicts}")
-        print(f"Label keybinds: {label_keybinds_by_task}")
-
         return Template(
             template_name="panel/panel.html.jinja2",
             context={
@@ -586,7 +582,6 @@ class AnnotationController(Controller):
             )
 
         next_annotation = unlabeled_annotations[0]
-        print(next_annotation.to_dict())
         return File(
             path=Path(next_annotation.filepath).resolve(),
             media_type="image/png",
@@ -652,7 +647,6 @@ class AnnotationController(Controller):
 
         task_annotations = task.annotations
         t1 = len([t for t in task_annotations if t.labeled])
-        print(f"Completed tasks: {t1} out of {len(task_annotations)}")
         progress = round(((t1) / (len(task_annotations))) * 100, 2)
         progress = 100 if progress > 100 else progress  # noqa: PLR2004 (replace 100 with const var)
 
