@@ -5,6 +5,9 @@ from uuid import UUID
 import pytest
 from advanced_alchemy.base import orm_registry
 from advanced_alchemy.utils.fixtures import open_fixture_async
+from app.config import base
+from app.domain.schema import Task, User
+from app.domain.services import AnnotationService, LabelKeybindService, TaskService, UserService
 from fixture_options import FIXTURE_OPTIONS
 from generate_fixtures import generate_fixtures, teardown_fixtures
 from litestar import Litestar
@@ -16,10 +19,6 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-
-from app.config import base
-from app.domain.schema import Task, User
-from app.domain.services import AnnotationService, LabelKeybindService, TaskService, UserService
 
 pytestmark = pytest.mark.anyio
 pytest_plugins = ["app_fixture"]

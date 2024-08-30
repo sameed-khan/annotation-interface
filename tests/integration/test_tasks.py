@@ -4,6 +4,8 @@ from typing import Any, TypedDict
 from urllib.parse import quote
 
 import pytest
+from app.domain import urls
+from app.domain.schema import Annotation, Task
 from fixture_options import TestTask
 from litestar import Litestar
 from litestar.status_codes import (
@@ -15,9 +17,6 @@ from litestar.status_codes import (
 from litestar.testing import AsyncTestClient
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.domain import urls
-from app.domain.schema import Annotation, Task
 
 pytestmark = pytest.mark.anyio
 
@@ -166,7 +165,7 @@ class TestTaskCreation:
         task_construct = {
             "title": title,
             "root": quote(root),
-            "label_keybinds": [{"label": j, "keybind": k} for (j, k) in zip(labels, keybinds)],
+            "label_keybinds": [{"label": j, "keybind": k} for (j, k) in zip(labels, keybinds, strict=False)],
         }
 
         response = await self.client.post(

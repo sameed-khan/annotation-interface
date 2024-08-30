@@ -1,9 +1,8 @@
 import pytest
+from app.domain import urls
 from litestar import Litestar
 from litestar.status_codes import HTTP_200_OK
 from litestar.testing import AsyncTestClient
-
-from app.domain import urls
 
 pytestmark = pytest.mark.anyio
 

@@ -1,12 +1,11 @@
 import os
 import re
-from typing import List, NotRequired, Self, TypedDict
+from typing import Annotated, NotRequired, Self, TypedDict
 from urllib.parse import unquote
 from uuid import UUID
 
 from pydantic import BaseModel, Field, StringConstraints, model_validator
 from pydantic.functional_validators import AfterValidator, BeforeValidator
-from typing_extensions import Annotated
 
 from app.domain import constants
 
@@ -87,6 +86,11 @@ ValidLabel = Annotated[
     StringConstraints(min_length=1, max_length=20, pattern=r"^[a-zA-Z0-9\s-]+$"),
     Field(..., description="Label for annotation"),
 ]
+ValidUpdateLabel = Annotated[  # allows for None or emptry string update to undo a label
+    str,
+    StringConstraints(max_length=20, pattern=r"^[a-zA-Z0-9\s-]*$"),
+    Field(..., description="Label update to annotation"),
+]
 ValidKeybind = Annotated[
     str,
     StringConstraints(max_length=1, min_length=1),
@@ -103,7 +107,7 @@ class LabelKeybindDict(TypedDict):
 
 # TASK
 class TaskBaseData(BaseModel):
-    label_keybinds: List[LabelKeybindDict]
+    label_keybinds: list[LabelKeybindDict]
 
     @model_validator(mode="after")
     def validate_keybinds(self) -> Self:
@@ -126,7 +130,7 @@ class TaskData(TaskBaseData):
 
 
 class TaskUpdateData(TaskBaseData):
-    files: List[ValidPath] = Field(..., description="Files to be added to task")
+    files: list[ValidPath] = Field(..., description="Files to be added to task")
 
     @model_validator(mode="after")
     def validate_unique_files(self) -> Self:
@@ -138,4 +142,4 @@ class TaskUpdateData(TaskBaseData):
 
 # ANNOTATION
 class AnnotationUpdateData(BaseModel):
-    label: ValidLabel
+    label: ValidUpdateLabel

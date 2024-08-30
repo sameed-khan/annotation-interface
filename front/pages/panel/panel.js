@@ -179,7 +179,7 @@ function handleTaskEditModalOpen(event) {
 
 function handleTaskDeleteButtonClick(event) {
   const taskId = event.target.closest('.task-display-card').dataset.task_id;
-  fetch(`${routes.unassignTask}?task_id=${encodeURIComponent(taskId)}`)
+  fetch(`${routes.unassignTask}?task_id=${encodeURIComponent(taskId)}`, {method: 'DELETE'})
     .then((response) => {
       if (!response.ok) {
         throw new Error(response.statusText);

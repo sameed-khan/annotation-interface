@@ -15,6 +15,7 @@ export const routes = {
 
   checkUsername: '/api/users/check_username',
   loginUser: '/api/users/login',
+  createUser: '/api/users/create',
 
   createTask: '/api/tasks/create',
   assignTask: '/api/tasks/assign',

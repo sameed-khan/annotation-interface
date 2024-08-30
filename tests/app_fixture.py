@@ -3,10 +3,6 @@ from typing import Any
 
 import pytest
 from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyPlugin
-from litestar import Litestar
-from litestar.middleware.session.client_side import CookieBackendConfig
-from litestar.testing import AsyncTestClient, create_async_test_client
-
 from app.config import base, get_settings
 from app.config.plugin_config import (
     AppDirCLIPlugin,
@@ -22,6 +18,9 @@ from app.domain.controllers import (
     TaskController,
     UserController,
 )
+from litestar import Litestar
+from litestar.middleware.session.client_side import CookieBackendConfig
+from litestar.testing import AsyncTestClient, create_async_test_client
 
 pytestmark = pytest.mark.anyio
 

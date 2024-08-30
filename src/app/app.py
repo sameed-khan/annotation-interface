@@ -15,7 +15,7 @@ async def backup_database() -> None:
         return
 
     database_url = settings.db.URL
-    dbname = urlparse(database_url).path
+    dbname = urlparse(database_url).path[1:]  # '/dev.db' --> 'dev.db'
     current_path = Path().resolve()
     dbpath = current_path / Path(dbname)
     backup_path = f"{dbpath}.bak"

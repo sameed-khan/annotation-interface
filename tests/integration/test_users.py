@@ -1,9 +1,13 @@
 import json
 from base64 import b64decode
-from typing import Any, Dict, Literal
+from typing import Any, Literal
 from uuid import UUID
 
 import pytest
+from app.domain import urls
+from app.domain.constants import DEFAULT_KEYBINDS_IN_ORDER
+from app.domain.schema import User
+from app.domain.services import TaskService, UserService
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from litestar import Litestar
 from litestar.status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZED
@@ -11,15 +15,10 @@ from litestar.testing import AsyncTestClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.domain import urls
-from app.domain.constants import DEFAULT_KEYBINDS_IN_ORDER
-from app.domain.schema import User
-from app.domain.services import TaskService, UserService
-
 pytestmark = pytest.mark.anyio
 
 
-def helper_decode_string(encoded: str, secret_key: bytes) -> Dict[str, Any]:
+def helper_decode_string(encoded: str, secret_key: bytes) -> dict[str, Any]:
     """Decode secret session data according to library code of ClientSideSessionBackend"""
     nonce_size = 12
     aad = b"additional_authenticated_data="

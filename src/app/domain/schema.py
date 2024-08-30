@@ -1,4 +1,3 @@
-from typing import Optional
 from uuid import UUID
 
 from advanced_alchemy.base import BigIntAuditBase, UUIDAuditBase
@@ -55,9 +54,9 @@ class Task(UUIDAuditBase):
 class Annotation(BigIntAuditBase):
     __tablename__ = "annotations"
     __table_args__ = {"comment": "Record of annotation and label"}
-    label: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    label: Mapped[str | None] = mapped_column(String, nullable=True)
     labeled: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    labeled_by: Mapped[Optional[UUID]] = mapped_column(ForeignKey("users.id"), nullable=True)
+    labeled_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     filepath: Mapped[str] = mapped_column(String, nullable=False)
     task_id: Mapped[UUID] = mapped_column(ForeignKey("tasks.id"), nullable=False)
 

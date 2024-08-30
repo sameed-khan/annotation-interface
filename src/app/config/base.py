@@ -14,10 +14,10 @@ TRUE_VALUES = {"True", "true", "1", "yes", "Y", "T"}
 class DatabaseSettings:
     """Settings for SQLAlchemy and database instantiation"""
 
-    BACKUP: bool = (
-        field(default_factory=lambda: os.getenv("DATABASE_BACKUP", "True")) in TRUE_VALUES
+    BACKUP: bool = field(
+        default_factory=lambda: os.getenv("DATABASE_BACKUP", "True") in TRUE_VALUES
     )
-    ECHO: bool = field(default_factory=lambda: os.getenv("DATABASE_ECHO", "False")) in TRUE_VALUES
+    ECHO: bool = field(default_factory=lambda: os.getenv("DATABASE_ECHO", "False") in TRUE_VALUES)
     URL: str = field(
         default_factory=lambda: os.getenv("DATABASE_URL", "sqlite+aiosqlite:///dev.db")
     )
@@ -59,8 +59,8 @@ class ServerSettings:
     APP_LOC: str = "app.app:app"
     HOST: str = field(default_factory=lambda: os.getenv("LITESTAR_HOST", "0.0.0.0"))
     PORT: int = field(default_factory=lambda: int(os.getenv("LITESTAR_PORT", "8000")))
-    RELOAD: bool = (
-        field(default_factory=lambda: os.getenv("LITESTAR_RELOAD", "False")) in TRUE_VALUES
+    RELOAD: bool = field(
+        default_factory=lambda: os.getenv("LITESTAR_RELOAD", "False") in TRUE_VALUES
     )
     RELOAD_DIRS: list[str] = field(default_factory=lambda: ["src"])
 
@@ -70,12 +70,12 @@ class AppSettings:
     """Application configuration"""
 
     URL: str = field(default_factory=lambda: os.getenv("APP_URL", "http://localhost:8000"))
-    DEBUG: bool = field(default_factory=lambda: os.getenv("LITESTAR_DEBUG", "True")) in TRUE_VALUES
+    DEBUG: bool = field(default_factory=lambda: os.getenv("LITESTAR_DEBUG", "True") in TRUE_VALUES)
     SECRET_KEY: bytes = field(
         default_factory=lambda: os.getenv("SECRET_KEY", "").encode("utf-8") or urandom(16)
     )
     NAME: str = field(default_factory=lambda: "app")
-    AUTHENTICATE: bool = field(default_factory=lambda: os.getenv("TESTING", "True")) in TRUE_VALUES
+    AUTHENTICATE: bool = field(default_factory=lambda: os.getenv("TESTING", "True") in TRUE_VALUES)
 
 
 @dataclass

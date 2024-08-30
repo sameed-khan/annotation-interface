@@ -1,8 +1,8 @@
 import json
 import os
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Sequence
 from pathlib import Path
-from typing import Annotated, Any, Dict, Sequence
+from typing import Annotated, Any
 from uuid import UUID
 
 from litestar import Controller, MediaType, Request, delete, get, patch, post
@@ -224,7 +224,7 @@ class UserController(Controller):
     )
     async def check_username(
         self, users_service: UserService, request_username: str
-    ) -> Response[Dict[str, bool]]:
+    ) -> Response[dict[str, bool]]:
         """Check if username is available."""
         user = await users_service.get_one_or_none(username=request_username)
         return Response(content={"available": user is None}, status_code=HTTP_200_OK)
@@ -275,7 +275,7 @@ class UserController(Controller):
         users_service: UserService,
         data: Annotated[UserData, Body(media_type=RequestEncodingType.JSON)],
         request: Request[Any, Any, Any],
-    ) -> Response[Dict[str, str]]:  # Add type parameters to Response
+    ) -> Response[dict[str, str]]:  # Add type parameters to Response
         # litestar automatically handles PermissionDeniedException and
         # transmission to client
         user = await users_service.authenticate(data.request_username, data.request_password)
@@ -310,7 +310,7 @@ class TaskController(Controller):
         label_keybinds_service: LabelKeybindService,
         data: Annotated[TaskData, Body(media_type=RequestEncodingType.JSON)],
         request: Request[User, Any, Any],
-    ) -> Response[Dict[str, str]]:
+    ) -> Response[dict[str, str]]:
         """Create a new task."""
         creator_user_id = request.user.id
         new_task_id = (
@@ -387,7 +387,7 @@ class TaskController(Controller):
         label_keybinds_service: LabelKeybindService,
         data: dict[str, list[str]],
         request: Request[User, Any, Any],
-    ) -> Response[Dict[str, str]]:
+    ) -> Response[dict[str, str]]:
         """Assign task to current user."""
 
         user_id = request.user.id
@@ -425,7 +425,7 @@ class TaskController(Controller):
             )
             tasks_to_update.append(task)
 
-        for task, lk in zip(tasks_to_update, new_lks):
+        for task, lk in zip(tasks_to_update, new_lks, strict=False):
             task.label_keybinds.extend(lk)
 
         user.assigned_tasks.extend(tasks)
@@ -444,7 +444,7 @@ class TaskController(Controller):
         users_service: UserService,
         task_id: str,
         request: Request[User, Any, Any],
-    ) -> Response[Dict[str, str]] | NotFoundException:
+    ) -> Response[dict[str, str]] | NotFoundException:
         """Delete a specified task from current user."""
         # TODO: figure out why middleware throws an exception if you run just getting request.user
         user_id = request.user.id
@@ -472,7 +472,7 @@ class TaskController(Controller):
         request: Request[User, Any, Any],
         data: Annotated[TaskUpdateData, Body(media_type=RequestEncodingType.JSON)],
         task_id: UUID,
-    ) -> Response[Dict[str, str | int]]:
+    ) -> Response[dict[str, str | int]]:
         """Update task with new keybinds and annotations."""
         user_id = request.user.id
 
@@ -528,7 +528,7 @@ class TaskController(Controller):
                 "task_title": title,
                 "task_id": a.task_id,
                 "annotation_id": a.id,
-                "labeled_by": await users_service.get_one(id=a.labeled_by)
+                "labeled_by": (await users_service.get_one(id=a.labeled_by)).username
                 if a.labeled_by
                 else "Unknown",
                 "created_at": a.created_at,
@@ -602,10 +602,13 @@ class AnnotationController(Controller):
         status_code=HTTP_200_OK,
     )
     async def get_annotation(
-        self, tasks_service: TaskService, task_id: str, annotation_id: int
+        self, tasks_service: TaskService, task_id: str, annotation_id: str
     ) -> File:
+        int_annotation_id = int(annotation_id)
         task = await tasks_service.get_one(id=task_id)
-        next_annotations: list[Annotation] = [a for a in task.annotations if a.id == annotation_id]
+        next_annotations: list[Annotation] = [
+            a for a in task.annotations if a.id == int_annotation_id
+        ]
         if len(next_annotations) == 0:
             raise PermissionDeniedException("Annotation does not belong to task!")
         next_annotation = next_annotations[0]
@@ -630,9 +633,10 @@ class AnnotationController(Controller):
         annotations_service: AnnotationService,
         data: Annotated[AnnotationUpdateData, Body(media_type=RequestEncodingType.JSON)],
         task_id: str,
-        annotation_id: int,
+        annotation_id: str,
         request: Request[User, Any, Any],
     ) -> dict[str, str | int | float]:
+        coerced_annotation_id = int(annotation_id)
         coerced_task_id = UUID(task_id)
 
         user_tasks = request.user.assigned_tasks
@@ -640,8 +644,8 @@ class AnnotationController(Controller):
         if task.id not in [t.id for t in user_tasks]:
             raise PermissionDeniedException("Task does not belong to user!")
 
-        if annotation_id > 0:  # negative value is sent as response for all annos complete
-            annotation = await annotations_service.get_one(id=annotation_id)
+        if coerced_annotation_id > 0:  # negative value is sent as response for all annos complete
+            annotation = await annotations_service.get_one(id=coerced_annotation_id)
             annotation.label = data.label
             annotation.labeled = bool(data.label)  # if label is empty string or None, it is False
             annotation.labeled_by = request.user.id
@@ -666,7 +670,7 @@ class SystemController(Controller):
         summary="Check if path is directory and get contents information",
         status_code=HTTP_200_OK,
     )
-    async def check_path(self, path: str) -> Response[Dict[str, int]] | NotFoundException:
+    async def check_path(self, path: str) -> Response[dict[str, int]] | NotFoundException:
         """Check if path is directory and get contents information.
         Args:
             path (str): Path to check. Must be an absolute path and must exist on local filesystem.

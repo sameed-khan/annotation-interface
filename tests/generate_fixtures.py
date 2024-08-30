@@ -214,10 +214,10 @@ def generate_fixtures() -> None:
                 annotations.append(new_anno)
                 generate_random_image(new_anno["filepath"])  # type: ignore
 
-    user_tasks.extend({str(user["id"]): str(task["id"])} for (user, task) in zip(users, tasks))
+    user_tasks.extend({str(user["id"]): str(task["id"])} for (user, task) in zip(users, tasks, strict=False))
     all_dicts = [users, tasks, label_keybinds, annotations, user_tasks]
     scopes = ["users", "tasks", "label_keybinds", "annotations", "user_tasks"]
-    for data, filename in zip(all_dicts, scopes):
+    for data, filename in zip(all_dicts, scopes, strict=False):
         with open(Path(FIXTURE_OPTIONS.fixtures_folder) / Path(f"{filename}.json"), "w") as f:
             json.dump(data, f, indent=4, default=lambda x: str(x))
 

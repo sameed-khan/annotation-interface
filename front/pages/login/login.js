@@ -1,58 +1,58 @@
 import {routes} from '../../shared/scripts/routes.js';
 
 function setup() {
-  document.addEventListener('DOMContentLoaded', () => {
-    // If there was an incorrect login
-    const loginFailed = localStorage.getItem('loginFailed');
-    if (loginFailed) {
-      localStorage.removeItem('loginFailed');
-      const loginFailedNotif = document.getElementById('login-failed-notification');
-      loginFailedNotif.classList.remove('is-hidden');
-    }
-    // Functions to open and close a modal
-    function openModal(el) {
-      el.classList.add('is-active');
-    }
+  // Functions to open and close a modal
+  function openModal(el) {
+    el.classList.add('is-active');
+  }
 
-    function closeModal(el) {
-      el.classList.remove('is-active');
-    }
+  function closeModal(el) {
+    el.classList.remove('is-active');
+  }
 
-    function closeAllModals() {
-      (document.querySelectorAll('.modal') || []).forEach((modal) => {
-        closeModal(modal);
-      });
-    }
-
-    // Add a click event on buttons to open a specific modal
-    (document.querySelectorAll('.js-modal-trigger') || []).forEach((trigger) => {
-      const modal = trigger.dataset.target;
-      const target = document.getElementById(modal);
-
-      trigger.addEventListener('click', () => {
-        openModal(target);
-      });
+  function closeAllModals() {
+    (document.querySelectorAll('.modal') || []).forEach((modal) => {
+      closeModal(modal);
     });
+  }
 
-    // Add a click event on various child elements to close the parent modal
-    (
-      document.querySelectorAll(
-        '.modal-background, .modal-close, .cancel-close, .modal-card-head, .delete, .modal-card-foot'
-      ) || []
-    ).forEach((close) => {
-      const target = close.closest('.modal');
+  // If there was an incorrect login
+  const loginFailed = localStorage.getItem('loginFailed');
 
-      close.addEventListener('click', () => {
-        closeModal(target);
-      });
+  if (loginFailed) {
+    localStorage.removeItem('loginFailed');
+    const loginFailedNotif = document.getElementById('login-failed-notification');
+    loginFailedNotif.classList.remove('is-hidden');
+  }
+
+  // Add a click event on buttons to open a specific modal
+  (document.querySelectorAll('.js-modal-trigger') || []).forEach((trigger) => {
+    const modal = trigger.dataset.target;
+    const target = document.getElementById(modal);
+
+    trigger.addEventListener('click', () => {
+      openModal(target);
     });
+  });
 
-    // Add a keyboard event to close all modals
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') {
-        closeAllModals();
-      }
+  // Add a click event on various child elements to close the parent modal
+  (
+    document.querySelectorAll(
+      '.modal-background, .modal-close, .cancel-close, .modal-card-head, .delete, .modal-card-foot'
+    ) || []
+  ).forEach((close) => {
+    const target = close.closest('.modal');
+
+    close.addEventListener('click', () => {
+      closeModal(target);
     });
+  });
+
+  // Add a keyboard event to close all modals
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeAllModals();
+    }
   });
 
   const usernameInput = document.getElementById('username-input');
@@ -119,6 +119,38 @@ function setup() {
             case 404:
               alert('This server has not been set up to handle logins.');
               break;
+            case 500:
+              alert('Internal server error. Please contact the developer.');
+              console.log(response);
+            default:
+              alert('Unhandled error. Please contact the developer.');
+              console.log(response);
+          }
+          throw new Error('Error:', response);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        window.location.href = data.url;
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      });
+  });
+
+  var createForm = document.getElementById('create-user-form');
+  createForm.addEventListener('submit', function (event) {
+    event.preventDefault();
+    fetch(routes.createUser, {
+      method: 'POST',
+      body: JSON.stringify(Object.fromEntries(new FormData(form))),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          switch (response.status) {
             case 500:
               alert('Internal server error. Please contact the developer.');
               console.log(response);

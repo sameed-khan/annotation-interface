@@ -7,7 +7,7 @@
 #   all-features: false
 #   with-sources: false
 #   generate-hashes: false
-#   universal: false
+#   universal: true
 
 -e file:.
 advanced-alchemy==0.15.0
@@ -17,6 +17,9 @@ aiosqlite==0.20.0
 alembic==1.13.2
     # via advanced-alchemy
     # via hfhs-annotation-interface
+altgraph==0.17.4
+    # via macholib
+    # via pyinstaller
 annotated-types==0.7.0
     # via pydantic
 anyio==4.4.0
@@ -26,11 +29,14 @@ anyio==4.4.0
 certifi==2024.6.2
     # via httpcore
     # via httpx
-cffi==1.16.0
+cffi==1.16.0 ; platform_python_implementation != 'PyPy'
     # via cryptography
 click==8.1.7
     # via litestar
     # via rich-click
+    # via uvicorn
+colorama==0.4.6 ; platform_system == 'Windows' or sys_platform == 'win32'
+    # via click
     # via uvicorn
 cryptography==42.0.8
     # via litestar
@@ -40,7 +46,8 @@ faker==25.9.2
     # via polyfactory
 fast-query-parsers==1.0.3
     # via litestar
-greenlet==3.0.3
+greenlet==3.0.3 ; sys_platform == 'darwin' or (python_version < '3.13' and (platform_machine == 'AMD64' or platform_machine == 'WIN32' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'ppc64le' or platform_machine == 'win32' or platform_machine == 'x86_64'))
+    # via advanced-alchemy
     # via sqlalchemy
 h11==0.14.0
     # via httpcore
@@ -60,9 +67,8 @@ jsbeautifier==1.15.1
     # via litestar
 litestar==2.9.1
     # via hfhs-annotation-interface
-    # via litestar-vite
-litestar-vite==0.2.8
-    # via hfhs-annotation-interface
+macholib==1.16.3 ; sys_platform == 'darwin'
+    # via pyinstaller
 mako==1.3.5
     # via alembic
 markdown-it-py==3.0.0
@@ -76,15 +82,16 @@ msgspec==0.18.6
     # via litestar
 multidict==6.0.5
     # via litestar
-mypy==1.10.1
-    # via hfhs-annotation-interface
-mypy-extensions==1.0.0
-    # via mypy
+packaging==24.1
+    # via pyinstaller
+    # via pyinstaller-hooks-contrib
 passlib==1.7.4
     # via hfhs-annotation-interface
+pefile==2024.8.26 ; sys_platform == 'win32'
+    # via pyinstaller
 polyfactory==2.16.0
     # via litestar
-pycparser==2.22
+pycparser==2.22 ; platform_python_implementation != 'PyPy'
     # via cffi
 pydantic==2.8.0
     # via hfhs-annotation-interface
@@ -92,12 +99,18 @@ pydantic-core==2.20.0
     # via pydantic
 pygments==2.18.0
     # via rich
+pyinstaller==6.10.0
+    # via hfhs-annotation-interface
+pyinstaller-hooks-contrib==2024.8
+    # via pyinstaller
 python-dateutil==2.9.0.post0
     # via faker
 python-dotenv==1.0.1
     # via uvicorn
 pytz==2024.1
     # via hfhs-annotation-interface
+pywin32-ctypes==0.2.3 ; sys_platform == 'win32'
+    # via pyinstaller
 pyyaml==6.0.1
     # via litestar
     # via uvicorn
@@ -106,8 +119,9 @@ rich==13.7.1
     # via rich-click
 rich-click==1.8.3
     # via litestar
-ruff==0.5.0
-    # via hfhs-annotation-interface
+setuptools==74.0.0
+    # via pyinstaller
+    # via pyinstaller-hooks-contrib
 six==1.16.0
     # via jsbeautifier
     # via python-dateutil
@@ -122,7 +136,6 @@ typing-extensions==4.12.2
     # via aiosqlite
     # via alembic
     # via litestar
-    # via mypy
     # via polyfactory
     # via pydantic
     # via pydantic-core
@@ -132,7 +145,7 @@ tzdata==2024.1
     # via hfhs-annotation-interface
 uvicorn==0.30.1
     # via litestar
-uvloop==0.19.0
+uvloop==0.19.0 ; sys_platform != 'win32'
     # via litestar
     # via uvicorn
 watchfiles==0.22.0
